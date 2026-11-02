@@ -61,16 +61,6 @@ mDNS doesn't always work across Wi-Fi networks or VLANs, and some devices answer
 
 If you have untested hardware, please open an issue with a **diagnostics download** (device page → ⋮ → Download diagnostics), or with fixtures captured using [`zeptrion dump`](https://github.com/diaznet/zeptrionair-api#supported-hardware).
 
-## Migrating
-
-### From YAML (`rest`, `rest_command`, template switches/covers)
-1. Add the devices with this integration.
-2. Remove the old `rest:`, `rest_command:`, `script:` and template entities from your YAML, then restart.
-3. In the entity settings, rename the new entities to the old entity IDs, so automations and dashboards keep working. Lights become `light.*`, not `switch.*`, so update automations that call `switch.turn_on`/`switch.turn_off`.
-
-### From `heldchen/ha-zeptrion-air`
-That integration uses the domain `zeptrion_air`; this one uses `zeptrionair`, so both can be installed side by side. Add the devices here, move your automations over, then remove the old integration.
-
 ## Troubleshooting
 
 - Enable debug logging:
