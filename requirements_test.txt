@@ -1,0 +1,5 @@
+# Test dependencies. zeptrionair-api must match the pin in custom_components/zeptrionair/manifest.json
+# (checked in CI). Dependabot bumps both lines of this file; update manifest.json in the same PR.
+pytest-homeassistant-custom-component==0.13.375
+zeptrionair-api==0.1.0
+ruff==0.17.3

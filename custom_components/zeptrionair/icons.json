@@ -1,0 +1,17 @@
+{
+  "entity": {
+    "button": {
+      "recall_scene": {
+        "default": "mdi:palette-outline"
+      }
+    },
+    "event": {
+      "key": {
+        "default": "mdi:gesture-tap-button"
+      },
+      "smartbutton": {
+        "default": "mdi:gesture-tap-box"
+      }
+    }
+  }
+}

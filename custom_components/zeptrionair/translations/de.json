@@ -1,0 +1,127 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "zeptrionAir-Gerät hinzufügen",
+        "description": "Gib den Hostnamen oder die IP-Adresse des zApp-Geräts ein (zum Beispiel zapp-12345678 oder 192.168.1.50).",
+        "data": {
+          "host": "Host"
+        },
+        "data_description": {
+          "host": "Hostname oder IP-Adresse des zApp-WLAN-Geräts. Eine feste IP-Adresse (DHCP-Reservierung) wird empfohlen."
+        }
+      },
+      "discovery_confirm": {
+        "title": "zeptrionAir-Gerät gefunden",
+        "description": "Möchtest du {name} ({model}) unter {host} hinzufügen?"
+      },
+      "reconfigure": {
+        "title": "Geräteadresse ändern",
+        "description": "Gib den neuen Hostnamen oder die neue IP-Adresse dieses zApp-Geräts ein.",
+        "data": {
+          "host": "Host"
+        },
+        "data_description": {
+          "host": "Hostname oder IP-Adresse des zApp-WLAN-Geräts."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unter dieser Adresse konnte keine Verbindung zu einem zeptrionAir-Gerät hergestellt werden."
+    },
+    "abort": {
+      "already_configured": "Dieses Gerät ist bereits eingerichtet.",
+      "cannot_connect": "Keine Verbindung zum Gerät möglich.",
+      "not_zeptrion": "Das gefundene Gerät ist kein zeptrionAir-zApp-Gerät.",
+      "reconfigure_successful": "Die Geräteadresse wurde aktualisiert.",
+      "wrong_device": "Diese Adresse gehört zu einem anderen zApp-Gerät."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Kanaleinstellungen",
+        "description": "Wähle den Kanal, den du einstellen möchtest.",
+        "data": {
+          "channel": "Kanal"
+        }
+      },
+      "cover": {
+        "title": "Storen-Einstellungen",
+        "description": "Einstellungen für {channel}. Das Gerät meldet keine Position; mit aktivierter Positionsschätzung wird die Position aus den Laufzeiten berechnet.",
+        "data": {
+          "position_tracking": "Position schätzen",
+          "travel_time_up": "Laufzeit nach oben",
+          "travel_time_down": "Laufzeit nach unten"
+        },
+        "data_description": {
+          "position_tracking": "Eine geschätzte Position anzeigen und das Anfahren einer Position erlauben.",
+          "travel_time_up": "Sekunden von ganz geschlossen bis ganz offen.",
+          "travel_time_down": "Sekunden von ganz offen bis ganz geschlossen."
+        }
+      },
+      "dimmer": {
+        "title": "Dimmer-Einstellungen",
+        "description": "Einstellungen für {channel}. Das Setzen einer Helligkeit ist experimentell: Das Gerät kann nur für eine bestimmte Zeit dimmen.",
+        "data": {
+          "dim_time": "Gesamte Dimmzeit"
+        },
+        "data_description": {
+          "dim_time": "Millisekunden, um von 0 % auf 100 % zu dimmen."
+        }
+      }
+    },
+    "abort": {
+      "not_loaded": "Das Gerät muss geladen sein, um seine Einstellungen zu ändern.",
+      "nothing_to_configure": "Dieses Gerät hat keine Storen oder Dimmer zum Einstellen."
+    }
+  },
+  "entity": {
+    "button": {
+      "recall_scene": {
+        "name": "Szene {scene} abrufen"
+      }
+    },
+    "event": {
+      "key": {
+        "name": "Taste {key}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Gedrückt",
+              "release": "Losgelassen"
+            }
+          }
+        }
+      },
+      "smartbutton": {
+        "name": "Smart-Taste {key}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Gedrückt",
+              "release": "Losgelassen"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "WLAN-Signal"
+      },
+      "device_temperature": {
+        "name": "Gerätetemperatur"
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Das Gerät hat den Befehl nicht angenommen: {error}"
+    },
+    "position_unknown": {
+      "message": "Die aktuelle Position ist unbekannt. Fahre die Store zuerst ganz auf oder ganz zu."
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Ajouter un appareil zeptrionAir",
+        "description": "Saisissez le nom d'hôte ou l'adresse IP de l'appareil zApp (par exemple zapp-12345678 ou 192.168.1.50).",
+        "data": {
+          "host": "Hôte"
+        },
+        "data_description": {
+          "host": "Nom d'hôte ou adresse IP de l'appareil WLAN zApp. Une adresse IP fixe (réservation DHCP) est recommandée."
+        }
+      },
+      "discovery_confirm": {
+        "title": "Appareil zeptrionAir détecté",
+        "description": "Voulez-vous ajouter {name} ({model}) à l'adresse {host} ?"
+      },
+      "reconfigure": {
+        "title": "Modifier l'adresse de l'appareil",
+        "description": "Saisissez le nouveau nom d'hôte ou la nouvelle adresse IP de cet appareil zApp.",
+        "data": {
+          "host": "Hôte"
+        },
+        "data_description": {
+          "host": "Nom d'hôte ou adresse IP de l'appareil WLAN zApp."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter à un appareil zeptrionAir à cette adresse."
+    },
+    "abort": {
+      "already_configured": "Cet appareil est déjà configuré.",
+      "cannot_connect": "Impossible de se connecter à l'appareil.",
+      "not_zeptrion": "L'appareil détecté n'est pas un appareil zApp zeptrionAir.",
+      "reconfigure_successful": "L'adresse de l'appareil a été mise à jour.",
+      "wrong_device": "Cette adresse correspond à un autre appareil zApp."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Réglages des canaux",
+        "description": "Choisissez le canal à configurer.",
+        "data": {
+          "channel": "Canal"
+        }
+      },
+      "cover": {
+        "title": "Réglages du store",
+        "description": "Réglages pour {channel}. L'appareil n'indique pas de position ; si l'estimation est activée, la position est calculée à partir des durées de course.",
+        "data": {
+          "position_tracking": "Estimer la position",
+          "travel_time_up": "Durée de montée",
+          "travel_time_down": "Durée de descente"
+        },
+        "data_description": {
+          "position_tracking": "Afficher une position estimée et permettre de régler une position.",
+          "travel_time_up": "Secondes de complètement fermé à complètement ouvert.",
+          "travel_time_down": "Secondes de complètement ouvert à complètement fermé."
+        }
+      },
+      "dimmer": {
+        "title": "Réglages du variateur",
+        "description": "Réglages pour {channel}. Le réglage de la luminosité est expérimental : l'appareil ne peut varier que pendant une durée donnée.",
+        "data": {
+          "dim_time": "Durée de variation complète"
+        },
+        "data_description": {
+          "dim_time": "Millisecondes pour passer de 0 % à 100 %."
+        }
+      }
+    },
+    "abort": {
+      "not_loaded": "L'appareil doit être chargé pour modifier ses réglages.",
+      "nothing_to_configure": "Cet appareil n'a pas de store ni de variateur à configurer."
+    }
+  },
+  "entity": {
+    "button": {
+      "recall_scene": {
+        "name": "Rappeler la scène {scene}"
+      }
+    },
+    "event": {
+      "key": {
+        "name": "Touche {key}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Appuyée",
+              "release": "Relâchée"
+            }
+          }
+        }
+      },
+      "smartbutton": {
+        "name": "Touche Smart {key}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Appuyée",
+              "release": "Relâchée"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "Signal Wi-Fi"
+      },
+      "device_temperature": {
+        "name": "Température de l'appareil"
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "L'appareil n'a pas accepté la commande : {error}"
+    },
+    "position_unknown": {
+      "message": "La position actuelle est inconnue. Ouvrez ou fermez d'abord complètement le store."
+    }
+  }
+}

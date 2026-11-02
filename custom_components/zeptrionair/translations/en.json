@@ -1,0 +1,127 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Add a zeptrionAir device",
+        "description": "Enter the hostname or IP address of the zApp device (for example zapp-12345678 or 192.168.1.50).",
+        "data": {
+          "host": "Host"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of the zApp WLAN device. A fixed IP address (DHCP reservation) is recommended."
+        }
+      },
+      "discovery_confirm": {
+        "title": "Discovered zeptrionAir device",
+        "description": "Do you want to add {name} ({model}) at {host}?"
+      },
+      "reconfigure": {
+        "title": "Change the device address",
+        "description": "Enter the new hostname or IP address of this zApp device.",
+        "data": {
+          "host": "Host"
+        },
+        "data_description": {
+          "host": "Hostname or IP address of the zApp WLAN device."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to a zeptrionAir device at this address."
+    },
+    "abort": {
+      "already_configured": "This device is already configured.",
+      "cannot_connect": "Could not connect to the device.",
+      "not_zeptrion": "The discovered device is not a zeptrionAir zApp device.",
+      "reconfigure_successful": "The device address was updated.",
+      "wrong_device": "This address belongs to a different zApp device."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Channel settings",
+        "description": "Choose the channel to configure.",
+        "data": {
+          "channel": "Channel"
+        }
+      },
+      "cover": {
+        "title": "Cover settings",
+        "description": "Settings for {channel}. The device doesn't report positions; with position tracking enabled, the position is estimated from the travel times.",
+        "data": {
+          "position_tracking": "Estimate position",
+          "travel_time_up": "Travel time up",
+          "travel_time_down": "Travel time down"
+        },
+        "data_description": {
+          "position_tracking": "Show an estimated position and allow setting a position.",
+          "travel_time_up": "Seconds from fully closed to fully open.",
+          "travel_time_down": "Seconds from fully open to fully closed."
+        }
+      },
+      "dimmer": {
+        "title": "Dimmer settings",
+        "description": "Settings for {channel}. Setting a brightness is experimental: the device can only dim for a given time.",
+        "data": {
+          "dim_time": "Full dimming time"
+        },
+        "data_description": {
+          "dim_time": "Milliseconds to dim from 0 % to 100 %."
+        }
+      }
+    },
+    "abort": {
+      "not_loaded": "The device must be loaded to change its settings.",
+      "nothing_to_configure": "This device has no covers or dimmers to configure."
+    }
+  },
+  "entity": {
+    "button": {
+      "recall_scene": {
+        "name": "Recall scene {scene}"
+      }
+    },
+    "event": {
+      "key": {
+        "name": "Key {key}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Pressed",
+              "release": "Released"
+            }
+          }
+        }
+      },
+      "smartbutton": {
+        "name": "Smartbutton {key}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Pressed",
+              "release": "Released"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "Wi-Fi signal"
+      },
+      "device_temperature": {
+        "name": "Device temperature"
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "The device did not accept the command: {error}"
+    },
+    "position_unknown": {
+      "message": "The current position is unknown. Open or close the cover fully first."
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Aggiungi un dispositivo zeptrionAir",
+        "description": "Inserisci il nome host o l'indirizzo IP del dispositivo zApp (ad esempio zapp-12345678 o 192.168.1.50).",
+        "data": {
+          "host": "Host"
+        },
+        "data_description": {
+          "host": "Nome host o indirizzo IP del dispositivo WLAN zApp. Si consiglia un indirizzo IP fisso (prenotazione DHCP)."
+        }
+      },
+      "discovery_confirm": {
+        "title": "Dispositivo zeptrionAir rilevato",
+        "description": "Vuoi aggiungere {name} ({model}) all'indirizzo {host}?"
+      },
+      "reconfigure": {
+        "title": "Modifica l'indirizzo del dispositivo",
+        "description": "Inserisci il nuovo nome host o il nuovo indirizzo IP di questo dispositivo zApp.",
+        "data": {
+          "host": "Host"
+        },
+        "data_description": {
+          "host": "Nome host o indirizzo IP del dispositivo WLAN zApp."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile connettersi a un dispositivo zeptrionAir a questo indirizzo."
+    },
+    "abort": {
+      "already_configured": "Questo dispositivo è già configurato.",
+      "cannot_connect": "Impossibile connettersi al dispositivo.",
+      "not_zeptrion": "Il dispositivo rilevato non è un dispositivo zApp zeptrionAir.",
+      "reconfigure_successful": "L'indirizzo del dispositivo è stato aggiornato.",
+      "wrong_device": "Questo indirizzo appartiene a un altro dispositivo zApp."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Impostazioni dei canali",
+        "description": "Scegli il canale da configurare.",
+        "data": {
+          "channel": "Canale"
+        }
+      },
+      "cover": {
+        "title": "Impostazioni della tenda",
+        "description": "Impostazioni per {channel}. Il dispositivo non indica la posizione; con la stima attivata, la posizione viene calcolata dai tempi di corsa.",
+        "data": {
+          "position_tracking": "Stima la posizione",
+          "travel_time_up": "Tempo di salita",
+          "travel_time_down": "Tempo di discesa"
+        },
+        "data_description": {
+          "position_tracking": "Mostra una posizione stimata e consente di impostare una posizione.",
+          "travel_time_up": "Secondi da completamente chiusa a completamente aperta.",
+          "travel_time_down": "Secondi da completamente aperta a completamente chiusa."
+        }
+      },
+      "dimmer": {
+        "title": "Impostazioni del dimmer",
+        "description": "Impostazioni per {channel}. L'impostazione della luminosità è sperimentale: il dispositivo può regolare solo per un tempo determinato.",
+        "data": {
+          "dim_time": "Tempo di regolazione completo"
+        },
+        "data_description": {
+          "dim_time": "Millisecondi per passare da 0 % a 100 %."
+        }
+      }
+    },
+    "abort": {
+      "not_loaded": "Il dispositivo deve essere caricato per modificarne le impostazioni.",
+      "nothing_to_configure": "Questo dispositivo non ha tende né dimmer da configurare."
+    }
+  },
+  "entity": {
+    "button": {
+      "recall_scene": {
+        "name": "Richiama scena {scene}"
+      }
+    },
+    "event": {
+      "key": {
+        "name": "Tasto {key}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Premuto",
+              "release": "Rilasciato"
+            }
+          }
+        }
+      },
+      "smartbutton": {
+        "name": "Tasto Smart {key}",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "press": "Premuto",
+              "release": "Rilasciato"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "rssi": {
+        "name": "Segnale Wi-Fi"
+      },
+      "device_temperature": {
+        "name": "Temperatura del dispositivo"
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Il dispositivo non ha accettato il comando: {error}"
+    },
+    "position_unknown": {
+      "message": "La posizione attuale è sconosciuta. Apri o chiudi prima completamente la tenda."
+    }
+  }
+}

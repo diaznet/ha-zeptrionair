@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Bumps zeptrionair-api and the HA test framework in requirements_test.txt. When the library
+  # is bumped, update the pin in custom_components/zeptrionair/manifest.json in the same PR
+  # (CI fails until both match).
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: daily

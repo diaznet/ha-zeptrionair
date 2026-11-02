@@ -1,0 +1,58 @@
+name: Release
+
+# Push a tag v1.2.3 after bumping "version" in manifest.json (in a PR). The workflow checks
+# the versions, checks that the pinned zeptrionair-api is on PyPI, builds zeptrionair.zip and
+# creates the GitHub Release that HACS installs from.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check versions
+        id: versions
+        run: python scripts/check_versions.py "$GITHUB_REF_NAME" | tee versions.txt && grep '^library_version=' versions.txt >> "$GITHUB_OUTPUT"
+
+      - name: Check that the pinned library is on PyPI
+        env:
+          LIBRARY_VERSION: ${{ steps.versions.outputs.library_version }}
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/zeptrionair-api/${LIBRARY_VERSION}/json")
+          if [ "$status" != "200" ]; then
+            echo "::error::zeptrionair-api ${LIBRARY_VERSION} is not on PyPI (HTTP $status). Release the library first."
+            exit 1
+          fi
+
+      - name: Build zeptrionair.zip
+        run: |
+          cd custom_components/zeptrionair
+          zip -r "$GITHUB_WORKSPACE/zeptrionair.zip" . -x '__pycache__/*' '*.pyc'
+          unzip -l "$GITHUB_WORKSPACE/zeptrionair.zip"
+
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" {found=1; next}
+            found && /^## \[/ {exit}
+            found {print}
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "See CHANGELOG.md" > notes.md; fi
+          cat notes.md
+
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          body_path: notes.md
+          prerelease: ${{ contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
+          files: zeptrionair.zip
