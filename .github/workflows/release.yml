@@ -2,7 +2,8 @@ name: Release
 
 # Push a tag v1.2.3 after bumping "version" in manifest.json (in a PR). The workflow checks
 # the versions, checks that the pinned zeptrionair-api is on PyPI, builds zeptrionair.zip and
-# creates the GitHub Release that HACS installs from.
+# creates the GitHub Release that HACS installs from. Nothing is released unless the full
+# validation (validate.yml) passes for the tagged commit.
 
 on:
   push:
@@ -12,8 +13,15 @@ permissions:
   contents: read
 
 jobs:
+  validate:
+    name: Validate (hassfest, HACS, lint, tests)
+    uses: ./.github/workflows/validate.yml
+    permissions:
+      contents: read
+
   release:
     name: GitHub Release
+    needs: validate
     runs-on: ubuntu-latest
     permissions:
       contents: write

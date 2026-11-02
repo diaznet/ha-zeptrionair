@@ -7,6 +7,7 @@ on:
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
+  workflow_call: # the release workflow runs the full validation first
 
 permissions:
   contents: read
