@@ -5,6 +5,10 @@
 
 Custom integration for **Feller zeptrionAir** WLAN devices (zApp: 3340-2-x and 3340-4-x). It is fully local and uses push updates: wall-switch presses show up in Home Assistant within a fraction of a second, with no cloud and no polling every second.
 
+<p align="center">
+  <img src="img/zeptrionair-cover.jpg" alt="Feller zeptrionAir switch with Smartfront" width="300">
+</p>
+
 Built on the [zeptrionair-api](https://github.com/diaznet/zeptrionair-api) library.
 
 ## Features
