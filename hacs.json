@@ -1,6 +1,10 @@
 {
   "name": "Feller zeptrionAir",
   "homeassistant": "2025.2.0",
+  "country": [
+    "CH",
+    "LI"
+  ],
   "zip_release": true,
   "filename": "zeptrionair.zip"
 }

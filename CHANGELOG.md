@@ -4,6 +4,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.1]
+
+### Changed
+- `hacs.json`: set `country` to Switzerland and Liechtenstein (zeptrionAIR is sold there only), as required for the HACS default repositories.
+- README: cover picture; removed the migration section.
+
 ## [0.1.0]
 
 ### Added
@@ -26,5 +32,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Translations: English, German, French, Italian.
 - Local brand icon (Home Assistant 2026.3+).
 
-[Unreleased]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/diaznet/ha-zeptrionair/releases/tag/v0.1.0
