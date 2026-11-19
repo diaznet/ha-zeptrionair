@@ -1,7 +1,7 @@
 # Feller zeptrionAir for Home Assistant
 
 [![Validate](https://github.com/diaznet/ha-zeptrionair/actions/workflows/validate.yml/badge.svg)](https://github.com/diaznet/ha-zeptrionair/actions/workflows/validate.yml)
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz/)
 
 Custom integration for **Feller zeptrionAir** WLAN devices (zApp: 3340-2-x and 3340-4-x). It is fully local and uses push updates: wall-switch presses show up in Home Assistant within a fraction of a second, with no cloud and no polling every second.
 
@@ -29,10 +29,14 @@ Each zApp module becomes a device (Wi-Fi signal, keys, temperature). Each used c
 
 Requires Home Assistant **2025.2** or newer.
 
-### HACS (recommended)
-1. In HACS, open the menu ⋮ → **Custom repositories**, add `https://github.com/diaznet/ha-zeptrionair` with type **Integration**.
+### Marketplace / HACS (recommended)
+The integration is in the HACS default repositories, so you can install it by searching for it:
+
+1. Open **Settings → Marketplace** (Home Assistant 2026.11 and newer) or **HACS** (older versions).
 2. Search for **Feller zeptrionAir** and download it.
 3. Restart Home Assistant.
+
+If it doesn't show up in the search, add it as a custom repository instead: menu ⋮ → **Custom repositories**, add `https://github.com/diaznet/ha-zeptrionair` with type **Integration**, then continue with step 2.
 
 ### Manual
 Copy `custom_components/zeptrionair` into your `config/custom_components/` folder and restart Home Assistant.
