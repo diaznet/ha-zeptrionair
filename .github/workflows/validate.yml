@@ -40,8 +40,23 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.14"
-      - run: uvx ruff==0.17.3 check .
-      - run: uvx ruff==0.17.3 format --check .
+      - name: Read the ruff version from requirements_test.txt (kept up to date by Dependabot)
+        id: ruff
+        run: |
+          version="$(sed -n 's/^ruff==\([^ #]*\).*/\1/p' requirements_test.txt)"
+          if [ -z "$version" ]; then
+            echo "::error::requirements_test.txt does not pin ruff==x.y.z"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Ruff check
+        env:
+          RUFF_VERSION: ${{ steps.ruff.outputs.version }}
+        run: uvx "ruff==${RUFF_VERSION}" check .
+      - name: Ruff format
+        env:
+          RUFF_VERSION: ${{ steps.ruff.outputs.version }}
+        run: uvx "ruff==${RUFF_VERSION}" format --check .
       - run: python scripts/check_translations.py
       - run: python scripts/check_versions.py
 
