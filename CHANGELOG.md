@@ -6,6 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 - README: installation now leads with searching in the Marketplace/HACS (the integration is in the HACS default repositories); custom repository steps kept as a fallback.
+- README: cropped the cover picture.
 
 ## [0.1.1]
 
