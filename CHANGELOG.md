@@ -4,11 +4,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.2]
+
 ### Changed
 - README: installation now leads with searching in the Marketplace/HACS (the integration is in the HACS default repositories); custom repository steps kept as a fallback.
 - README: cropped the cover picture.
 - New brand icon, drawn after the real zeptrionAIR switch with Smartfront (frame, top key with LEDs, up/down keys).
 - `manifest.json`: added integration categories `plugs_switches` and `blinds_curtains`, used by the Marketplace catalog.
+- CI: lint uses the ruff version pinned in `requirements_test.txt`; release workflow uses `action-gh-release` 3.0.4.
 
 ## [0.1.1]
 
@@ -38,6 +41,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Translations: English, German, French, Italian.
 - Local brand icon (Home Assistant 2026.3+).
 
-[Unreleased]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/diaznet/ha-zeptrionair/releases/tag/v0.1.0
