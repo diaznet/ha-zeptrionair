@@ -1,6 +1,7 @@
 {
   "domain": "zeptrionair",
   "name": "Feller zeptrionAir",
+  "categories": ["plugs_switches", "blinds_curtains"],
   "codeowners": ["@diaznet"],
   "config_flow": true,
   "dhcp": [{ "hostname": "zapp-*" }, { "registered_devices": true }],

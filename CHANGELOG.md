@@ -8,6 +8,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - README: installation now leads with searching in the Marketplace/HACS (the integration is in the HACS default repositories); custom repository steps kept as a fallback.
 - README: cropped the cover picture.
 - New brand icon, drawn after the real zeptrionAIR switch with Smartfront (frame, top key with LEDs, up/down keys).
+- `manifest.json`: added integration categories `plugs_switches` and `blinds_curtains`, used by the Marketplace catalog.
 
 ## [0.1.1]
 
