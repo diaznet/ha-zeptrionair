@@ -12,6 +12,15 @@
       },
       "step_down": {
         "default": "mdi:arrow-down-thin"
+      },
+      "calibrate": {
+        "default": "mdi:tape-measure"
+      },
+      "reconnect": {
+        "default": "mdi:lan-connect"
+      },
+      "undo_led": {
+        "default": "mdi:undo-variant"
       }
     },
     "event": {
@@ -20,6 +29,25 @@
       },
       "smartbutton": {
         "default": "mdi:gesture-tap-box"
+      }
+    },
+    "light": {
+      "led": {
+        "default": "mdi:led-on",
+        "state": {
+          "off": "mdi:led-off"
+        }
+      }
+    },
+    "sensor": {
+      "connections": {
+        "default": "mdi:connection"
+      },
+      "short_outages": {
+        "default": "mdi:lan-pending"
+      },
+      "long_outages": {
+        "default": "mdi:lan-disconnect"
       }
     }
   },
@@ -35,6 +63,12 @@
     },
     "write_name": {
       "service": "mdi:rename-outline"
+    },
+    "calibrate": {
+      "service": "mdi:tape-measure"
+    },
+    "program_smartbutton": {
+      "service": "mdi:gesture-tap-box"
     }
   }
 }

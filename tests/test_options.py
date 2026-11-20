@@ -13,8 +13,10 @@ from zeptrionair_api.testing import FakeChannel, FakeZeptrionDevice
 from custom_components.zeptrionair.const import (
     CONF_CHANNELS,
     CONF_DIM_TIME,
+    CONF_LEARN_TRAVEL_TIMES,
     CONF_POSITION_TRACKING,
     CONF_STEP_DURATION,
+    CONF_TILT_TIME,
     CONF_TRAVEL_TIME_DOWN,
     CONF_TRAVEL_TIME_UP,
     DOMAIN,
@@ -47,6 +49,8 @@ async def test_cover_options(hass: HomeAssistant, loaded_entry: MockConfigEntry)
             CONF_TRAVEL_TIME_UP: 25,
             CONF_TRAVEL_TIME_DOWN: 22.5,
             CONF_STEP_DURATION: 400,
+            CONF_LEARN_TRAVEL_TIMES: False,
+            CONF_TILT_TIME: 1.5,
         },
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -55,6 +59,8 @@ async def test_cover_options(hass: HomeAssistant, loaded_entry: MockConfigEntry)
         CONF_TRAVEL_TIME_UP: 25,
         CONF_TRAVEL_TIME_DOWN: 22.5,
         CONF_STEP_DURATION: 400,
+        CONF_LEARN_TRAVEL_TIMES: False,
+        CONF_TILT_TIME: 1.5,
     }
     await hass.async_block_till_done()  # reload
     state = hass.states.get(entity_id(hass, "cover", f"{fake_serial}_ch2"))

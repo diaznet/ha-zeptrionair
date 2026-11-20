@@ -4,6 +4,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0]
+
+### Added
+- **Travel times without a stopwatch:** a *Calibrate* button and `zeptrionair.calibrate` action (fully up, down, up, then back; result as a notification), and a *Learn travel times* option (on by default) that updates them from every full run between the end stops. Position estimation turns on once both are known. Verified on real hardware.
+- **Slats:** *Slat tilt time* option; blinds with it get tilt open/close/stop/set position. Verified on real hardware.
+- **Scene recalls are followed:** scenes stored through Home Assistant are remembered (`scene_N` attribute) and their two-run replay is tracked exactly; recalls from elsewhere are recognised by the duration of their first run. Storing a scene on a blind that came from the bottom first drives it up and back, as Feller recommends. Verified on real hardware.
+- A cover at an end stop can only move away from it: runs of unknown origin starting there keep a direction.
+- Wall keys that move a cover only while held: the release counts as a stop.
+- **Smartbutton programming:** `zeptrionair.program_smartbutton` with commands for lights and covers of any zApp and raw Feller requests; the 730-byte limit is checked before anything blinks.
+- **Smartfront LEDs:** a light entity per used key's LED background colour (disabled by default), and *Undo LED change*.
+- *Reconnect* button, and *Connections* / *Short outages* / *Long outages* diagnostic sensors.
+
+### Changed
+- Changing options no longer reloads the integration; they apply immediately.
+- The cover's `current_position` attribute is Home Assistant's own (integer) again; the exact position is kept in the restore data.
+- Requires `zeptrionair-api` 0.2.0.
+
+### Fixed
+- A temporary error reading the Wi-Fi signal or the sensors (the zApp sometimes answers HTTP 500 during a motor run) no longer makes the whole update or the setup fail.
+
 ## [0.1.3]
 
 ### Fixed
@@ -57,7 +77,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Translations: English, German, French, Italian.
 - Local brand icon (Home Assistant 2026.3+).
 
-[Unreleased]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/diaznet/ha-zeptrionair/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.0...v0.1.1

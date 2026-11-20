@@ -54,13 +54,17 @@
           "position_tracking": "Estimate position",
           "travel_time_up": "Travel time up",
           "travel_time_down": "Travel time down",
-          "step_duration": "Step duration"
+          "step_duration": "Step duration",
+          "learn_travel_times": "Learn travel times",
+          "tilt_time": "Slat tilt time"
         },
         "data_description": {
           "position_tracking": "Show an estimated position and allow setting a position.",
           "travel_time_up": "Seconds from fully closed to fully open.",
           "travel_time_down": "Seconds from fully open to fully closed.",
-          "step_duration": "Milliseconds a cover moves for the Step up / Step down buttons and the step action."
+          "step_duration": "Milliseconds a cover moves for the Step up / Step down buttons and the step action.",
+          "learn_travel_times": "Measure the travel times from full runs between the end stops (nobody stopping the cover). Position estimation turns on once both are known.",
+          "tilt_time": "Seconds the slats of a blind need to turn fully (0 = no slats). The first part of a run after a change of direction turns the slats."
         }
       },
       "dimmer": {
@@ -92,6 +96,15 @@
       },
       "step_down": {
         "name": "Step down"
+      },
+      "calibrate": {
+        "name": "Calibrate"
+      },
+      "reconnect": {
+        "name": "Reconnect"
+      },
+      "undo_led": {
+        "name": "Undo LED change"
       }
     },
     "event": {
@@ -124,6 +137,20 @@
       },
       "device_temperature": {
         "name": "Device temperature"
+      },
+      "connections": {
+        "name": "Connections"
+      },
+      "short_outages": {
+        "name": "Short outages"
+      },
+      "long_outages": {
+        "name": "Long outages"
+      }
+    },
+    "light": {
+      "led": {
+        "name": "LED {key}"
       }
     }
   },
@@ -139,6 +166,63 @@
     },
     "entity_missing": {
       "message": "The light or cover of this channel isn't loaded."
+    },
+    "cover_moving": {
+      "message": "The cover is moving. Wait until it stops."
+    },
+    "cover_busy": {
+      "message": "{name} is already running a calibration or scene sequence."
+    },
+    "nothing_to_undo": {
+      "message": "There is no LED change to undo."
+    },
+    "not_a_zapp": {
+      "message": "The selected device is not a zeptrionAir zApp."
+    },
+    "no_smartbuttons": {
+      "message": "This zApp's front cannot program Smartbuttons."
+    },
+    "unknown_entity": {
+      "message": "{entity_id} is not a zeptrionAir light or cover."
+    },
+    "invalid_command": {
+      "message": "Invalid command: {command}"
+    },
+    "no_commands": {
+      "message": "Give at least one command or request."
+    },
+    "invalid_request": {
+      "message": "Invalid request: {error}"
+    },
+    "program_too_long": {
+      "message": "The programme is {size} bytes; the zApp accepts at most {limit}. Use fewer commands."
+    },
+    "smartbutton_press_now": {
+      "message": "Press the blinking Smartbutton on {name} within {wait} s."
+    },
+    "smartbutton_programmed": {
+      "message": "Smartbutton on {name} programmed ({count} request(s))."
+    },
+    "smartbutton_not_pressed": {
+      "message": "No Smartbutton was pressed on {name} in time. Nothing was changed."
+    },
+    "smartbutton_failed": {
+      "message": "Programming the Smartbutton failed: {error}"
+    },
+    "calibration_started": {
+      "message": "Calibrating {name}: fully up, down and up. Don't stop it."
+    },
+    "calibration_done": {
+      "message": "{name} calibrated: travel time up {up} s, down {down} s. Position estimation is on."
+    },
+    "sequence_aborted": {
+      "message": "{name}: the sequence was interrupted. Nothing was changed."
+    },
+    "scene_store_started": {
+      "message": "Storing scene {scene} on {name}: driving up first, then back."
+    },
+    "scene_stored": {
+      "message": "Scene {scene} stored on {name}."
     }
   },
   "services": {
@@ -187,6 +271,32 @@
         "group": {
           "name": "Group",
           "description": "Group (room) to write. Default: the area of the device."
+        }
+      }
+    },
+    "calibrate": {
+      "name": "Calibrate cover",
+      "description": "Measures both travel times: drives the cover fully up, down and up, stores the times, then returns to the previous position. Stopping or reversing aborts without changes. A notification shows the result."
+    },
+    "program_smartbutton": {
+      "name": "Program Smartbutton",
+      "description": "Programs a Smartbutton of a zApp, like the zeptrion app: the Smartbuttons blink, press the one to program within the wait time. It then sends the commands directly between the zApps, also when Home Assistant is down. Its previous programme is replaced and cannot be read back.",
+      "fields": {
+        "device_id": {
+          "name": "zApp",
+          "description": "The zApp whose Smartbutton is programmed."
+        },
+        "commands": {
+          "name": "Commands",
+          "description": "Lights or covers of any zApp and the command to send, e.g. [{entity_id: cover.office_shade, command: recall_s1}]. Commands: on, off, toggle, stop, open, close, recall_s1 to recall_s4, dim_up, dim_down, move_open, move_close, and timed ones like move_close_5000."
+        },
+        "requests": {
+          "name": "HTTP requests",
+          "description": "Additional requests in the Feller format (req, loc, pth, bdy, typ, hdr, prt), e.g. for other devices."
+        },
+        "wait": {
+          "name": "Wait time",
+          "description": "Seconds to press the Smartbutton (10-120)."
         }
       }
     }

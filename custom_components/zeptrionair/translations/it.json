@@ -54,13 +54,17 @@
           "position_tracking": "Stima la posizione",
           "travel_time_up": "Tempo di salita",
           "travel_time_down": "Tempo di discesa",
-          "step_duration": "Durata di un passo"
+          "step_duration": "Durata di un passo",
+          "learn_travel_times": "Impara i tempi di corsa",
+          "tilt_time": "Tempo di orientamento lamelle"
         },
         "data_description": {
           "position_tracking": "Mostra una posizione stimata e consente di impostare una posizione.",
           "travel_time_up": "Secondi da completamente chiusa a completamente aperta.",
           "travel_time_down": "Secondi da completamente aperta a completamente chiusa.",
-          "step_duration": "Millisecondi di movimento di una tenda per i pulsanti Passo su / Passo giù e l'azione passo."
+          "step_duration": "Millisecondi di movimento di una tenda per i pulsanti Passo su / Passo giù e l'azione passo.",
+          "learn_travel_times": "Misura i tempi di corsa dalle corse complete tra i finecorsa (senza che nessuno fermi la tenda). La stima della posizione si attiva quando entrambi sono noti.",
+          "tilt_time": "Secondi necessari alle lamelle di una tenda per orientarsi completamente (0 = nessuna lamella). La prima parte di una corsa dopo un cambio di direzione orienta le lamelle."
         }
       },
       "dimmer": {
@@ -92,6 +96,15 @@
       },
       "step_down": {
         "name": "Passo giù"
+      },
+      "calibrate": {
+        "name": "Calibra"
+      },
+      "reconnect": {
+        "name": "Riconnetti"
+      },
+      "undo_led": {
+        "name": "Annulla modifica LED"
       }
     },
     "event": {
@@ -124,6 +137,20 @@
       },
       "device_temperature": {
         "name": "Temperatura del dispositivo"
+      },
+      "connections": {
+        "name": "Connessioni"
+      },
+      "short_outages": {
+        "name": "Interruzioni brevi"
+      },
+      "long_outages": {
+        "name": "Interruzioni lunghe"
+      }
+    },
+    "light": {
+      "led": {
+        "name": "LED {key}"
       }
     }
   },
@@ -139,6 +166,63 @@
     },
     "entity_missing": {
       "message": "La luce o la tenda di questo canale non è caricata."
+    },
+    "cover_moving": {
+      "message": "La tenda è in movimento. Attendi che si fermi."
+    },
+    "cover_busy": {
+      "message": "{name} sta già eseguendo una calibrazione o una sequenza di scena."
+    },
+    "nothing_to_undo": {
+      "message": "Nessuna modifica LED da annullare."
+    },
+    "not_a_zapp": {
+      "message": "Il dispositivo selezionato non è uno zApp zeptrionAir."
+    },
+    "no_smartbuttons": {
+      "message": "Il frontale di questo zApp non può programmare tasti Smart."
+    },
+    "unknown_entity": {
+      "message": "{entity_id} non è una luce o una tenda zeptrionAir."
+    },
+    "invalid_command": {
+      "message": "Comando non valido: {command}"
+    },
+    "no_commands": {
+      "message": "Indica almeno un comando o una richiesta."
+    },
+    "invalid_request": {
+      "message": "Richiesta non valida: {error}"
+    },
+    "program_too_long": {
+      "message": "Il programma è di {size} byte; lo zApp ne accetta al massimo {limit}. Usa meno comandi."
+    },
+    "smartbutton_press_now": {
+      "message": "Premi entro {wait} s il tasto Smart lampeggiante su {name}."
+    },
+    "smartbutton_programmed": {
+      "message": "Tasto Smart su {name} programmato ({count} richiesta/e)."
+    },
+    "smartbutton_not_pressed": {
+      "message": "Nessun tasto Smart è stato premuto in tempo su {name}. Nulla è stato modificato."
+    },
+    "smartbutton_failed": {
+      "message": "La programmazione del tasto Smart non è riuscita: {error}"
+    },
+    "calibration_started": {
+      "message": "Calibrazione di {name}: completamente su, giù e su. Non fermarla."
+    },
+    "calibration_done": {
+      "message": "{name} calibrata: tempo di salita {up} s, di discesa {down} s. La stima della posizione è attiva."
+    },
+    "sequence_aborted": {
+      "message": "{name}: la sequenza è stata interrotta. Nulla è stato modificato."
+    },
+    "scene_store_started": {
+      "message": "Salvataggio della scena {scene} su {name}: prima su, poi ritorno."
+    },
+    "scene_stored": {
+      "message": "Scena {scene} salvata su {name}."
     }
   },
   "services": {
@@ -187,6 +271,32 @@
         "group": {
           "name": "Gruppo",
           "description": "Gruppo (stanza) da scrivere. Predefinito: l'area del dispositivo."
+        }
+      }
+    },
+    "calibrate": {
+      "name": "Calibra la tenda",
+      "description": "Misura entrambi i tempi di corsa: porta la tenda completamente su, giù e su, salva i tempi, poi torna alla posizione precedente. Fermare o invertire interrompe senza modifiche. Una notifica mostra il risultato."
+    },
+    "program_smartbutton": {
+      "name": "Programma tasto Smart",
+      "description": "Programma un tasto Smart di uno zApp, come l'app zeptrion: i tasti Smart lampeggiano, premi quello da programmare entro il tempo di attesa. Poi invia i comandi direttamente tra gli zApp, anche quando Home Assistant è spento. Il suo programma precedente viene sostituito e non può essere riletto.",
+      "fields": {
+        "device_id": {
+          "name": "zApp",
+          "description": "Lo zApp il cui tasto Smart viene programmato."
+        },
+        "commands": {
+          "name": "Comandi",
+          "description": "Luci o tende di qualsiasi zApp e il comando da inviare, ad es. [{entity_id: cover.tenda_ufficio, command: recall_s1}]. Comandi: on, off, toggle, stop, open, close, recall_s1 a recall_s4, dim_up, dim_down, move_open, move_close e quelli temporizzati come move_close_5000."
+        },
+        "requests": {
+          "name": "Richieste HTTP",
+          "description": "Richieste aggiuntive nel formato Feller (req, loc, pth, bdy, typ, hdr, prt), ad es. per altri dispositivi."
+        },
+        "wait": {
+          "name": "Tempo di attesa",
+          "description": "Secondi per premere il tasto Smart (10-120)."
         }
       }
     }

@@ -6,7 +6,8 @@
 
 Use IP addresses: DNS resolution is disabled inside the Home Assistant test harness.
 
-Covers are never moved by this test.
+Covers only move with ZEPTRION_LIVE_COVER=ip:channel (step, full runs, calibration, scene 4
+is overwritten) and ZEPTRION_LIVE_SLATS=ip:channel:tilt_seconds (slats only).
 """
 
 from __future__ import annotations
@@ -144,5 +145,113 @@ async def test_live_cover(hass: HomeAssistant, allow_devices: None) -> None:
     print(f"full open -> {hass.states.get(cover).state} after {up:.1f} s (travel time up)")
     assert hass.states.get(cover).state == "open"
 
+    await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+
+def _notifications(hass: HomeAssistant) -> str:
+    from homeassistant.components import persistent_notification
+
+    notes = persistent_notification._async_get_or_create_notifications(hass)
+    return " | ".join(n["message"] for n in notes.values())
+
+
+async def _setup_cover(hass: HomeAssistant, spec: str) -> tuple[MockConfigEntry, str]:
+    host, channel = spec.split(":")[:2]
+    async with ZeptrionDevice(host) as device:
+        serial = (await device.identify()).serial
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=serial, data={CONF_HOST: host})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    await asyncio.sleep(1)
+    cover = er.async_get(hass).async_get_entity_id("cover", DOMAIN, f"{serial}_ch{channel}")
+    assert cover is not None
+    return entry, cover
+
+
+@pytest.mark.skipif(not COVER, reason="set ZEPTRION_LIVE_COVER=ip:channel to move a cover")
+async def test_live_calibrate_and_scene(hass: HomeAssistant, allow_devices: None) -> None:
+    """MOVES THE COVER: calibration, 60 %, store scene 4, close, recall it. Ends fully open."""
+    entry, cover = await _setup_cover(hass, COVER)
+
+    async def call(domain: str, service: str, **data: object) -> None:
+        await hass.services.async_call(domain, service, {"entity_id": cover, **data}, blocking=True)
+
+    def position() -> object:
+        return hass.states.get(cover).attributes.get("current_position")
+
+    await call(DOMAIN, "calibrate")
+    start = time.monotonic()
+    while "calibrated" not in _notifications(hass) and "interrupted" not in _notifications(hass):
+        assert time.monotonic() - start < 240, "calibration did not finish"
+        await asyncio.sleep(0.5)
+    print(f"\n{_notifications(hass)}")
+    options = entry.options["channels"][cover_channel(COVER)]
+    print(f"options after calibration: {options}")
+    assert options["learned_up"] and options["learned_down"]
+    await _wait(hass, cover, {"open"}, 60)
+    print(f"after calibration: {hass.states.get(cover).state} at {position()}")
+
+    await call("cover", "set_cover_position", position=60)
+    await _wait(hass, cover, {"closing"}, 5)
+    await _wait(hass, cover, {"open", "closed"}, 60)
+    print(f"set 60 -> {position()}")
+    await call(DOMAIN, "store_scene", scene=4)
+    print(f"scene 4: {hass.states.get(cover).attributes.get('scene_4')}")
+
+    await call("cover", "close_cover")
+    await _wait(hass, cover, {"closing"}, 5)
+    await _wait(hass, cover, {"closed"}, 90)
+    await call(DOMAIN, "recall_scene", scene=4)
+    seen = []
+    start = changed = time.monotonic()
+    while time.monotonic() - start < 120:
+        state = hass.states.get(cover).state
+        if not seen or seen[-1] != state:
+            seen.append(state)
+            changed = time.monotonic()
+            print(f"  [{changed - start:5.1f}s] {state} {position()}")
+        # two runs with a pause between them: done once it has been still for 3 s
+        if len(seen) > 2 and state in ("open", "closed") and time.monotonic() - changed > 3:
+            break
+        await asyncio.sleep(0.1)
+    print(f"recall from the bottom: {seen} -> {position()} (expected about 60)")
+    assert "opening" in seen and "closing" in seen
+    assert abs(position() - 60) <= 8  # type: ignore[operator]
+
+    await call("cover", "open_cover")
+    await _wait(hass, cover, {"opening"}, 5)
+    await _wait(hass, cover, {"open"}, 90)
+    await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()
+
+
+def cover_channel(spec: str) -> str:
+    return spec.split(":")[1]
+
+
+SLATS = os.environ.get("ZEPTRION_LIVE_SLATS", "")
+
+
+@pytest.mark.skipif(not SLATS, reason="set ZEPTRION_LIVE_SLATS=ip:channel:tilt_seconds")
+async def test_live_slats(hass: HomeAssistant, allow_devices: None) -> None:
+    """TURNS THE SLATS: close and open them (the blind moves at most a few centimetres)."""
+    tilt = float(SLATS.split(":")[2])
+    entry, cover = await _setup_cover(hass, SLATS)
+    channels = {cover_channel(SLATS): {"tilt_time": tilt}}
+    hass.config_entries.async_update_entry(entry, options={"channels": channels})
+    await hass.async_block_till_done()
+
+    async def call(service: str) -> float:
+        await hass.services.async_call("cover", service, {"entity_id": cover}, blocking=True)
+        await _wait(hass, cover, {"opening", "closing"}, 5)
+        return await _wait(hass, cover, {"open", "closed", "unknown"}, 20)
+
+    for service in ("close_cover_tilt", "open_cover_tilt"):
+        seconds = await call(service)
+        tilt_now = hass.states.get(cover).attributes.get("current_tilt_position")
+        print(f"\n{service}: ran {seconds:.1f} s, tilt {tilt_now}")
+        assert seconds <= tilt + 1.5
     await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()

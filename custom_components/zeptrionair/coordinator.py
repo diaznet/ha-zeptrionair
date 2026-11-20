@@ -51,6 +51,15 @@ class ZeptrionData:
 
 
 @dataclass
+class ConnectionStats:
+    """Event-stream statistics since Home Assistant started."""
+
+    connections: int = 0
+    short_outages: int = 0  # back within UNAVAILABLE_GRACE
+    long_outages: int = 0
+
+
+@dataclass
 class _DirectionHint:
     direction: Direction
     at: float = field(default_factory=time.monotonic)
@@ -83,8 +92,15 @@ class ZeptrionCoordinator(DataUpdateCoordinator[ZeptrionData]):
         self._directions: dict[int, _DirectionHint] = {}
         self._stops: dict[int, float] = {}
         self._partial_runs: dict[int, float] = {}
+        self._releases: dict[int, float] = {}
         self._unavailable_timer: CALLBACK_TYPE | None = None
         self._stream_down = False
+        self._down_since: float | None = None
+        #: Connection statistics since startup (diagnostic sensors).
+        self.stats = ConnectionStats()
+        #: Smartfront LED background colours (LED id -> "#rrggbb") and the undo history.
+        self.led_colors: dict[int, str] = {}
+        self.led_history: list[dict[int, str]] = []
 
     # ------------------------------------------------------------------ setup
 
@@ -99,6 +115,13 @@ class ZeptrionCoordinator(DataUpdateCoordinator[ZeptrionData]):
                 self.mac = await self.device.mac()
             except ZeptrionError:
                 self.mac = None
+            if self.smartfront is not None:
+                try:  # optional: LEDs must not keep the zApp from being set up
+                    leds = await self.device.leds() or []
+                except ZeptrionError as err:
+                    _LOGGER.debug("Can't read the LEDs of %s: %s", self.device.host, err)
+                    leds = []
+                self.led_colors = {led.id: led.background.lower() for led in leds}
         except ZeptrionError as err:
             raise UpdateFailed(f"cannot read device information: {err}") from err
         if not self.capabilities.websocket:
@@ -107,10 +130,22 @@ class ZeptrionCoordinator(DataUpdateCoordinator[ZeptrionData]):
     async def _async_update_data(self) -> ZeptrionData:
         try:
             values = await self.device.states()
-            rssi = await self.device.rssi()
-            sensors = await self.device.sensors() if self.capabilities.sensors else None
         except ZeptrionError as err:
             raise UpdateFailed(f"cannot read device state: {err}") from err
+        # Diagnostics only: a zApp busy with a motor run sometimes answers HTTP 500 here
+        # (observed). Keep the last value instead of failing the whole update.
+        previous = self.data
+        try:
+            rssi = await self.device.rssi()
+        except ZeptrionError as err:
+            _LOGGER.debug("Can't read the Wi-Fi signal of %s: %s", self.device.host, err)
+            rssi = previous.rssi if previous is not None else None
+        sensors = previous.sensors if previous is not None else None
+        if self.capabilities.sensors:
+            try:
+                sensors = await self.device.sensors()
+            except ZeptrionError as err:
+                _LOGGER.debug("Can't read the sensors of %s: %s", self.device.host, err)
         connected = self.data.connected if self.data is not None else True
         return ZeptrionData(values=values, rssi=rssi, sensors=sensors, connected=connected)
 
@@ -155,6 +190,9 @@ class ZeptrionCoordinator(DataUpdateCoordinator[ZeptrionData]):
             self.async_set_updated_data(replace(self.data, values=values, connected=True))
         elif isinstance(event, KeyEvent):
             function = event.function
+            if not event.pressed and function is not None and function.kind == "channel":
+                for channel in function.channels:
+                    self._releases[channel] = time.monotonic()
             if event.pressed and function is not None and function.direction is not None:
                 for channel in function.channels:
                     running = self.data is not None and self.data.values.get(channel) == 100
@@ -170,15 +208,27 @@ class ZeptrionCoordinator(DataUpdateCoordinator[ZeptrionData]):
     @callback
     def _handle_connection(self, event: ConnectionEvent) -> None:
         if event.connected:
+            self.stats.connections += 1
+            if self._down_since is not None:
+                outage = time.monotonic() - self._down_since
+                if outage < UNAVAILABLE_GRACE:
+                    self.stats.short_outages += 1
+                else:
+                    self.stats.long_outages += 1
+                self._down_since = None
             if self._stream_down:
                 _LOGGER.info("Event stream of %s is back (%s)", self.device.host, event.transport)
             self._stream_down = False
             self._cancel_unavailable_timer()
             if self.data is not None and not self.data.connected:
                 self.async_set_updated_data(replace(self.data, connected=True))
+            else:
+                self.async_update_listeners()  # connection statistics changed
             return
         if not self._stream_down:
             _LOGGER.warning("Lost the event stream of %s: %s", self.device.host, event.error)
+        if self._down_since is None:
+            self._down_since = time.monotonic()
         self._stream_down = True
         if self._unavailable_timer is None:
             self._unavailable_timer = async_call_later(
@@ -239,6 +289,11 @@ class ZeptrionCoordinator(DataUpdateCoordinator[ZeptrionData]):
     def note_partial_run(self, channel: int) -> None:
         """The next run of ``channel`` ends on its own before an end stop (timed command)."""
         self._partial_runs[channel] = time.monotonic()
+
+    def recent_release(self, channel: int, within: float) -> bool:
+        """A wall key of ``channel`` was released less than ``within`` seconds ago."""
+        at = self._releases.get(channel)
+        return at is not None and time.monotonic() - at <= within
 
     def consume_partial_run(self, channel: int) -> bool:
         at = self._partial_runs.pop(channel, None)

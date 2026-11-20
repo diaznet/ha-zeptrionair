@@ -54,13 +54,17 @@
           "position_tracking": "Position schätzen",
           "travel_time_up": "Laufzeit nach oben",
           "travel_time_down": "Laufzeit nach unten",
-          "step_duration": "Schrittdauer"
+          "step_duration": "Schrittdauer",
+          "learn_travel_times": "Laufzeiten lernen",
+          "tilt_time": "Lamellen-Wendezeit"
         },
         "data_description": {
           "position_tracking": "Eine geschätzte Position anzeigen und das Anfahren einer Position erlauben.",
           "travel_time_up": "Sekunden von ganz geschlossen bis ganz offen.",
           "travel_time_down": "Sekunden von ganz offen bis ganz geschlossen.",
-          "step_duration": "Millisekunden, die eine Store für die Tasten Schritt hoch / Schritt runter und die Schritt-Aktion fährt."
+          "step_duration": "Millisekunden, die eine Store für die Tasten Schritt hoch / Schritt runter und die Schritt-Aktion fährt.",
+          "learn_travel_times": "Die Laufzeiten aus vollen Fahrten zwischen den Endlagen messen (ohne dass jemand die Store stoppt). Die Positionsschätzung schaltet sich ein, sobald beide bekannt sind.",
+          "tilt_time": "Sekunden, die die Lamellen einer Store zum vollständigen Wenden brauchen (0 = keine Lamellen). Der erste Teil einer Fahrt nach einem Richtungswechsel wendet die Lamellen."
         }
       },
       "dimmer": {
@@ -92,6 +96,15 @@
       },
       "step_down": {
         "name": "Schritt runter"
+      },
+      "calibrate": {
+        "name": "Kalibrieren"
+      },
+      "reconnect": {
+        "name": "Neu verbinden"
+      },
+      "undo_led": {
+        "name": "LED-Änderung rückgängig"
       }
     },
     "event": {
@@ -124,6 +137,20 @@
       },
       "device_temperature": {
         "name": "Gerätetemperatur"
+      },
+      "connections": {
+        "name": "Verbindungen"
+      },
+      "short_outages": {
+        "name": "Kurze Unterbrüche"
+      },
+      "long_outages": {
+        "name": "Lange Unterbrüche"
+      }
+    },
+    "light": {
+      "led": {
+        "name": "LED {key}"
       }
     }
   },
@@ -139,6 +166,63 @@
     },
     "entity_missing": {
       "message": "Das Licht oder die Store dieses Kanals ist nicht geladen."
+    },
+    "cover_moving": {
+      "message": "Die Store fährt. Warte, bis sie stillsteht."
+    },
+    "cover_busy": {
+      "message": "{name} führt bereits eine Kalibrierung oder Szenen-Sequenz aus."
+    },
+    "nothing_to_undo": {
+      "message": "Es gibt keine LED-Änderung zum Rückgängigmachen."
+    },
+    "not_a_zapp": {
+      "message": "Das gewählte Gerät ist kein zeptrionAir-zApp."
+    },
+    "no_smartbuttons": {
+      "message": "Die Front dieses zApp kann keine Smart-Tasten programmieren."
+    },
+    "unknown_entity": {
+      "message": "{entity_id} ist kein zeptrionAir-Licht und keine zeptrionAir-Store."
+    },
+    "invalid_command": {
+      "message": "Ungültiger Befehl: {command}"
+    },
+    "no_commands": {
+      "message": "Gib mindestens einen Befehl oder eine Anfrage an."
+    },
+    "invalid_request": {
+      "message": "Ungültige Anfrage: {error}"
+    },
+    "program_too_long": {
+      "message": "Das Programm ist {size} Bytes gross; das zApp akzeptiert höchstens {limit}. Verwende weniger Befehle."
+    },
+    "smartbutton_press_now": {
+      "message": "Drücke innerhalb von {wait} s die blinkende Smart-Taste an {name}."
+    },
+    "smartbutton_programmed": {
+      "message": "Smart-Taste an {name} programmiert ({count} Anfrage(n))."
+    },
+    "smartbutton_not_pressed": {
+      "message": "An {name} wurde nicht rechtzeitig eine Smart-Taste gedrückt. Nichts wurde geändert."
+    },
+    "smartbutton_failed": {
+      "message": "Das Programmieren der Smart-Taste ist fehlgeschlagen: {error}"
+    },
+    "calibration_started": {
+      "message": "Kalibriere {name}: ganz hoch, runter und hoch. Bitte nicht stoppen."
+    },
+    "calibration_done": {
+      "message": "{name} kalibriert: Laufzeit hoch {up} s, runter {down} s. Die Positionsschätzung ist eingeschaltet."
+    },
+    "sequence_aborted": {
+      "message": "{name}: Die Sequenz wurde unterbrochen. Nichts wurde geändert."
+    },
+    "scene_store_started": {
+      "message": "Speichere Szene {scene} an {name}: zuerst ganz hoch, dann zurück."
+    },
+    "scene_stored": {
+      "message": "Szene {scene} an {name} gespeichert."
     }
   },
   "services": {
@@ -187,6 +271,32 @@
         "group": {
           "name": "Gruppe",
           "description": "Zu schreibende Gruppe (Raum). Standard: der Bereich des Geräts."
+        }
+      }
+    },
+    "calibrate": {
+      "name": "Store kalibrieren",
+      "description": "Misst beide Laufzeiten: fährt die Store ganz hoch, runter und hoch, speichert die Zeiten und fährt dann zur vorherigen Position zurück. Stoppen oder Umkehren bricht ohne Änderung ab. Eine Benachrichtigung zeigt das Ergebnis."
+    },
+    "program_smartbutton": {
+      "name": "Smart-Taste programmieren",
+      "description": "Programmiert eine Smart-Taste eines zApp wie die zeptrion-App: Die Smart-Tasten blinken, drücke innerhalb der Wartezeit die zu programmierende. Sie sendet die Befehle dann direkt zwischen den zApps, auch wenn Home Assistant nicht läuft. Ihr bisheriges Programm wird ersetzt und kann nicht ausgelesen werden.",
+      "fields": {
+        "device_id": {
+          "name": "zApp",
+          "description": "Das zApp, dessen Smart-Taste programmiert wird."
+        },
+        "commands": {
+          "name": "Befehle",
+          "description": "Lichter oder Storen beliebiger zApps und der zu sendende Befehl, z. B. [{entity_id: cover.buero_store, command: recall_s1}]. Befehle: on, off, toggle, stop, open, close, recall_s1 bis recall_s4, dim_up, dim_down, move_open, move_close sowie zeitgesteuerte wie move_close_5000."
+        },
+        "requests": {
+          "name": "HTTP-Anfragen",
+          "description": "Zusätzliche Anfragen im Feller-Format (req, loc, pth, bdy, typ, hdr, prt), z. B. für andere Geräte."
+        },
+        "wait": {
+          "name": "Wartezeit",
+          "description": "Sekunden, um die Smart-Taste zu drücken (10-120)."
         }
       }
     }

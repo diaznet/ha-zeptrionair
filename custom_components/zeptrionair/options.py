@@ -12,8 +12,12 @@ from zeptrionair_api import Category
 from .const import (
     CONF_CHANNELS,
     CONF_DIM_TIME,
+    CONF_LEARN_TRAVEL_TIMES,
+    CONF_LEARNED_DOWN,
+    CONF_LEARNED_UP,
     CONF_POSITION_TRACKING,
     CONF_STEP_DURATION,
+    CONF_TILT_TIME,
     CONF_TRAVEL_TIME_DOWN,
     CONF_TRAVEL_TIME_UP,
     DEFAULT_DIM_TIME,
@@ -88,7 +92,15 @@ class ZeptrionOptionsFlow(OptionsFlow):
         if user_input is not None:
             options = {**self.config_entry.options}
             channels = {**options.get(CONF_CHANNELS, {})}
-            channels[str(self._channel)] = user_input
+            saved = dict(user_input)
+            # Keep the "measured" flags unless the travel time was changed by hand.
+            for key, flag in (
+                (CONF_TRAVEL_TIME_UP, CONF_LEARNED_UP),
+                (CONF_TRAVEL_TIME_DOWN, CONF_LEARNED_DOWN),
+            ):
+                if current.get(flag) and saved.get(key) == current.get(key):
+                    saved[flag] = True
+            channels[str(self._channel)] = saved
             options[CONF_CHANNELS] = channels
             return self.async_create_entry(data=options)
 
@@ -114,7 +126,14 @@ class ZeptrionOptionsFlow(OptionsFlow):
                 {
                     vol.Required(
                         CONF_POSITION_TRACKING,
-                        default=current.get(CONF_POSITION_TRACKING, False),
+                        default=current.get(
+                            CONF_POSITION_TRACKING,
+                            bool(current.get(CONF_LEARNED_UP) and current.get(CONF_LEARNED_DOWN)),
+                        ),
+                    ): selector.BooleanSelector(),
+                    vol.Required(
+                        CONF_LEARN_TRAVEL_TIMES,
+                        default=current.get(CONF_LEARN_TRAVEL_TIMES, True),
                     ): selector.BooleanSelector(),
                     vol.Required(
                         CONF_TRAVEL_TIME_UP,
@@ -124,6 +143,17 @@ class ZeptrionOptionsFlow(OptionsFlow):
                         CONF_TRAVEL_TIME_DOWN,
                         default=current.get(CONF_TRAVEL_TIME_DOWN, DEFAULT_TRAVEL_TIME),
                     ): _seconds(1, 300),
+                    vol.Required(
+                        CONF_TILT_TIME, default=current.get(CONF_TILT_TIME, 0)
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=0,
+                            max=10,
+                            step=0.1,
+                            unit_of_measurement="s",
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
                     vol.Required(
                         CONF_STEP_DURATION,
                         default=current.get(CONF_STEP_DURATION, DEFAULT_STEP_DURATION),

@@ -54,13 +54,17 @@
           "position_tracking": "Estimer la position",
           "travel_time_up": "Durée de montée",
           "travel_time_down": "Durée de descente",
-          "step_duration": "Durée d'un pas"
+          "step_duration": "Durée d'un pas",
+          "learn_travel_times": "Apprendre les durées de course",
+          "tilt_time": "Durée d'orientation des lamelles"
         },
         "data_description": {
           "position_tracking": "Afficher une position estimée et permettre de régler une position.",
           "travel_time_up": "Secondes de complètement fermé à complètement ouvert.",
           "travel_time_down": "Secondes de complètement ouvert à complètement fermé.",
-          "step_duration": "Millisecondes de mouvement d'un store pour les boutons Pas vers le haut / Pas vers le bas et l'action pas."
+          "step_duration": "Millisecondes de mouvement d'un store pour les boutons Pas vers le haut / Pas vers le bas et l'action pas.",
+          "learn_travel_times": "Mesurer les durées de course lors de courses complètes entre les fins de course (sans que personne n'arrête le store). L'estimation de position s'active dès que les deux sont connues.",
+          "tilt_time": "Secondes nécessaires aux lamelles d'un store pour s'orienter complètement (0 = pas de lamelles). Le début d'une course après un changement de sens oriente les lamelles."
         }
       },
       "dimmer": {
@@ -92,6 +96,15 @@
       },
       "step_down": {
         "name": "Pas vers le bas"
+      },
+      "calibrate": {
+        "name": "Calibrer"
+      },
+      "reconnect": {
+        "name": "Reconnecter"
+      },
+      "undo_led": {
+        "name": "Annuler le changement de LED"
       }
     },
     "event": {
@@ -124,6 +137,20 @@
       },
       "device_temperature": {
         "name": "Température de l'appareil"
+      },
+      "connections": {
+        "name": "Connexions"
+      },
+      "short_outages": {
+        "name": "Coupures courtes"
+      },
+      "long_outages": {
+        "name": "Coupures longues"
+      }
+    },
+    "light": {
+      "led": {
+        "name": "LED {key}"
       }
     }
   },
@@ -139,6 +166,63 @@
     },
     "entity_missing": {
       "message": "La lumière ou le store de ce canal n'est pas chargé."
+    },
+    "cover_moving": {
+      "message": "Le store est en mouvement. Attendez qu'il s'arrête."
+    },
+    "cover_busy": {
+      "message": "{name} exécute déjà une calibration ou une séquence de scène."
+    },
+    "nothing_to_undo": {
+      "message": "Aucun changement de LED à annuler."
+    },
+    "not_a_zapp": {
+      "message": "L'appareil choisi n'est pas un zApp zeptrionAir."
+    },
+    "no_smartbuttons": {
+      "message": "La façade de ce zApp ne peut pas programmer de touches Smart."
+    },
+    "unknown_entity": {
+      "message": "{entity_id} n'est ni une lumière ni un store zeptrionAir."
+    },
+    "invalid_command": {
+      "message": "Commande invalide : {command}"
+    },
+    "no_commands": {
+      "message": "Indiquez au moins une commande ou une requête."
+    },
+    "invalid_request": {
+      "message": "Requête invalide : {error}"
+    },
+    "program_too_long": {
+      "message": "Le programme fait {size} octets ; le zApp en accepte au plus {limit}. Utilisez moins de commandes."
+    },
+    "smartbutton_press_now": {
+      "message": "Appuyez dans les {wait} s sur la touche Smart qui clignote sur {name}."
+    },
+    "smartbutton_programmed": {
+      "message": "Touche Smart sur {name} programmée ({count} requête(s))."
+    },
+    "smartbutton_not_pressed": {
+      "message": "Aucune touche Smart n'a été pressée à temps sur {name}. Rien n'a été modifié."
+    },
+    "smartbutton_failed": {
+      "message": "La programmation de la touche Smart a échoué : {error}"
+    },
+    "calibration_started": {
+      "message": "Calibration de {name} : montée complète, descente et montée. Ne l'arrêtez pas."
+    },
+    "calibration_done": {
+      "message": "{name} calibré : durée de montée {up} s, de descente {down} s. L'estimation de position est activée."
+    },
+    "sequence_aborted": {
+      "message": "{name} : la séquence a été interrompue. Rien n'a été modifié."
+    },
+    "scene_store_started": {
+      "message": "Enregistrement de la scène {scene} sur {name} : montée d'abord, puis retour."
+    },
+    "scene_stored": {
+      "message": "Scène {scene} enregistrée sur {name}."
     }
   },
   "services": {
@@ -187,6 +271,32 @@
         "group": {
           "name": "Groupe",
           "description": "Groupe (pièce) à écrire. Par défaut : la pièce de l'appareil."
+        }
+      }
+    },
+    "calibrate": {
+      "name": "Calibrer le store",
+      "description": "Mesure les deux durées de course : monte complètement le store, le descend et le remonte, enregistre les durées, puis revient à la position précédente. Arrêter ou inverser interrompt sans modification. Une notification affiche le résultat."
+    },
+    "program_smartbutton": {
+      "name": "Programmer une touche Smart",
+      "description": "Programme une touche Smart d'un zApp, comme l'app zeptrion : les touches Smart clignotent, appuyez sur celle à programmer pendant le temps d'attente. Elle envoie ensuite les commandes directement entre les zApps, même quand Home Assistant est arrêté. Son programme précédent est remplacé et ne peut pas être relu.",
+      "fields": {
+        "device_id": {
+          "name": "zApp",
+          "description": "Le zApp dont la touche Smart est programmée."
+        },
+        "commands": {
+          "name": "Commandes",
+          "description": "Lumières ou stores de n'importe quel zApp et la commande à envoyer, par ex. [{entity_id: cover.store_bureau, command: recall_s1}]. Commandes : on, off, toggle, stop, open, close, recall_s1 à recall_s4, dim_up, dim_down, move_open, move_close et les commandes temporisées comme move_close_5000."
+        },
+        "requests": {
+          "name": "Requêtes HTTP",
+          "description": "Requêtes supplémentaires au format Feller (req, loc, pth, bdy, typ, hdr, prt), par ex. pour d'autres appareils."
+        },
+        "wait": {
+          "name": "Temps d'attente",
+          "description": "Secondes pour appuyer sur la touche Smart (10-120)."
         }
       }
     }

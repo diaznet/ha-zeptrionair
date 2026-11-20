@@ -17,11 +17,13 @@ Built on the [zeptrionair-api](https://github.com/diaznet/zeptrionair-api) libra
 |---|---|
 | **Discovery** | Automatic via mDNS (`_zapp._tcp`, older firmware via `_http._tcp`) and DHCP, or manual setup by hostname/IP. A device's IP address is updated automatically when it changes. |
 | **Lights** | On/off channels. Dimmers with brightness (**experimental**, untested on real dimmers; see below). |
-| **Covers** | Blinds, shades and awnings: open, close and stop, with live *opening/closing* state, including when moved from the wall switch. **Open/closed** is detected from the end stops, without any setup. *Step up / Step down* buttons. Optional **position estimation** from travel times, with *set position*. |
+| **Covers** | Blinds, shades and awnings: open, close and stop, with live *opening/closing* state, including when moved from the wall switch. **Open/closed** is detected from the end stops, without any setup. **Position** with *set position*: travel times are **learned** from full runs, measured with *Calibrate*, or typed in. **Slats** (tilt) for blinds. Scene recalls are followed. *Step up / Step down* buttons. |
 | **Events** | One event entity per Smartfront key and Smartbutton (`press`/`release`), for automations. |
 | **Scenes** | Buttons to recall and store the 4 scenes stored on each channel (disabled by default). |
-| **Actions** | `zeptrionair.store_scene`, `recall_scene`, `move_step`, `write_name` (see below). |
-| **Diagnostics** | Wi-Fi signal and device temperature sensors (disabled by default), plus a diagnostics download with identifying data redacted. |
+| **Smartbuttons** | Program a Smartbutton with commands for lights and covers of any zApp; it then works without Home Assistant. |
+| **Smartfront LEDs** | The background colour of each used key's LED as a light entity (disabled by default), with *Undo LED change*. |
+| **Actions** | `zeptrionair.store_scene`, `recall_scene`, `move_step`, `calibrate`, `write_name`, `program_smartbutton` (see below). |
+| **Diagnostics** | Wi-Fi signal, device temperature and connection statistics sensors (disabled by default), a *Reconnect* button, and a diagnostics download with identifying data redacted. |
 | **Languages** | English, Deutsch, Français, Italiano |
 
 Each zApp module becomes a device (Wi-Fi signal, keys, temperature). Each used channel becomes its own device named after the channel, with the light or cover as its main entity. The room stored on the zApp (`group`) is used as the suggested area.
@@ -51,7 +53,11 @@ mDNS doesn't always work across Wi-Fi networks or VLANs, and some devices answer
 ### Options (per channel)
 **Settings → Devices & services → Feller zeptrionAir → Configure**, then choose a channel:
 
-- **Covers:** *Step duration* (ms, default 250) for the step buttons and action. *Estimate position*, plus *Travel time up/down* in seconds. Measure a full travel with a stopwatch. With estimation enabled, the position snaps to 0 % or 100 % whenever the cover reaches its end position. If the cover is moved by something the integration can't interpret (for example a Smartbutton on another device), the position becomes unknown until the next full open or close.
+- **Covers:**
+  - *Estimate position*, *Travel time up/down* (s). The easiest way to get the travel times: press the cover's **Calibrate** button (it drives fully up, down and up, stores both times, turns estimation on and returns to where it was), or leave *Learn travel times* on (default): every full run from one end stop to the other that nobody stopped updates the time, and estimation turns on once both are known. Changing a time by hand is kept.
+  - *Slat tilt time* (s, 0 = no slats): how long the slats of a blind need to turn fully. The first part of a run after a change of direction turns the slats; with a tilt time set, the cover gets tilt controls.
+  - *Step duration* (ms, default 250) for the step buttons and action.
+  - Options apply immediately, without reloading.
 - **Dimmers:** *Full dimming time* (ms from 0 to 100 %, default 3400), used to reach a requested brightness.
 
 ## Actions
@@ -61,6 +67,8 @@ mDNS doesn't always work across Wi-Fi networks or VLANs, and some devices answer
 | `zeptrionair.store_scene` | lights, covers | Stores the current state on the zApp as scene 1-4, like holding a scene key on the wall. For blinds, Feller recommends driving fully up first, then to the wanted height, then storing. |
 | `zeptrionair.recall_scene` | lights, covers | Recalls scene 1-4. |
 | `zeptrionair.move_step` | covers | Moves a cover `up` or `down` for `duration` ms (default: the *Step duration* option), e.g. to turn the slats of a blind. |
+| `zeptrionair.calibrate` | covers | Measures the travel times (like the *Calibrate* button). Stopping or reversing the cover aborts without changes. A notification shows the result. |
+| `zeptrionair.program_smartbutton` | a zApp (`device_id`) | The Smartbuttons of that zApp blink for `wait` s (default 60); the one you press gets `commands` (lights/covers of any zApp, e.g. `{entity_id: cover.office_shade, command: recall_s1}`) and optional raw `requests` in the Feller format. **Its previous programme is replaced** and can't be read back. At most 730 bytes, checked before anything blinks. |
 | `zeptrionair.write_name` | lights, covers | Writes a name and group (room) into the zApp, so the zeptrion app shows the same names. Without `name`/`group`, the device's name and area in Home Assistant are used. At most 32 bytes each. |
 
 ```yaml
@@ -71,12 +79,25 @@ data:
   scene: 1
 ```
 
+```yaml
+action: zeptrionair.program_smartbutton
+data:
+  device_id: 0123456789abcdef0123456789abcdef  # the zApp with the Smartbutton
+  commands:
+    - entity_id: cover.office_shade
+      command: recall_s1
+    - entity_id: light.terrace
+      command: toggle
+```
+
 ## How it works and its limits
 
 - The devices report covers only as **motor running / stopped**, never a position. Direction comes from the command sent by Home Assistant, or from the wall key that was pressed (decoded from the Smartfront key layout).
 - **Dimmers** are reported to answer *on* (100) at any brightness, so the brightness can't be read back. It is tracked **optimistically**: Home Assistant remembers the brightness it set (also across restarts and for scenes stored through Home Assistant). A brightness is reached by dimming for a computed time from the known brightness, or by switching on (100 %) and dimming down. Changes made at the wall are seen as on/off only. Feedback from dimmer owners is welcome.
 - Home Assistant builds entity IDs from the area and the channel name, e.g. `cover.kitchen_kitchen_shade` for a channel named "Kitchen Shade" in the area "Kitchen". You can rename entity IDs in the entity settings.
-- **End stops:** a run that nobody stopped (no stop command or key press, no step, no scene) ended at an end stop, because the zApp switches the motor off there. The cover then shows *closed* or *open*, also without position estimation. A run stopped in between shows *open*. A run of unknown direction (e.g. a Smartbutton on another zApp, or a scene) makes the state *unknown* until the next full run.
+- **End stops:** a run that nobody stopped (no stop command or key press, no step, no scene) ended at an end stop, because the zApp switches the motor off there. The cover then shows *closed* or *open*, also without position estimation. A run stopped in between shows *open*. A cover at an end stop can only move away from it, so a run started elsewhere (e.g. a Smartbutton on another zApp) still has a known direction. Otherwise its direction is unknown and the state becomes *unknown* until the next full run.
+- **Keys that move only while held** are supported: releasing the key counts as stopping the cover.
+- **Scenes on covers** are stored by the zApp as "the end stop the blind came from, plus the net motor time from there". Recalling a scene from that end stop is one run; from anywhere else the zApp first drives to that end stop, pauses about 0.5 s, then runs back. With position estimation, scenes stored through Home Assistant are remembered (attribute `scene_N`) and followed exactly. Scenes recalled elsewhere are followed when the first run can be recognised by its duration. Storing a scene through Home Assistant on a blind that last came from the bottom first drives it fully up and back to the same height, as Feller recommends.
 
 ## Supported hardware
 

@@ -15,16 +15,21 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
+from homeassistant.components.light import (
+    ATTR_BRIGHTNESS,
+    ATTR_RGB_COLOR,
+    ColorMode,
+    LightEntity,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.restore_state import ExtraStoredData, RestoreEntity
-from zeptrionair_api import Category, Channel, timed_command
+from zeptrionair_api import Category, Channel, KeyFunction, ZeptrionError, timed_command
 from zeptrionair_api.const import TIMED_MAX_MS, TIMED_MIN_MS
 
-from .const import CONF_DIM_TIME, DEFAULT_DIM_TIME
+from .const import CONF_DIM_TIME, DEFAULT_DIM_TIME, LED_HISTORY
 from .coordinator import ZeptrionConfigEntry, ZeptrionCoordinator
-from .entity import ZeptrionMainChannelEntity
+from .entity import ZeptrionHubEntity, ZeptrionMainChannelEntity, command_error
 from .options import channel_options
 
 _LOGGER = logging.getLogger(__name__)
@@ -39,11 +44,18 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data
-    async_add_entities(
+    entities: list[LightEntity] = [
         ZeptrionLight(coordinator, channel)
         for channel in coordinator.used_channels
         if channel.category is not None and channel.category.is_light
-    )
+    ]
+    if coordinator.smartfront is not None and coordinator.led_colors:
+        entities.extend(
+            ZeptrionLedLight(coordinator, key)
+            for key in coordinator.smartfront.keys
+            if key.kind != "unused" and key.key in coordinator.led_colors
+        )
+    async_add_entities(entities)
 
 
 class _LightExtraData(ExtraStoredData):
@@ -167,3 +179,72 @@ class ZeptrionLight(ZeptrionMainChannelEntity, LightEntity, RestoreEntity):
         stored = self._scenes.get(scene) if self._dimmer else None
         if stored:  # on/off follows the device's push; the level is known only to us
             self._brightness = stored
+
+
+def _hex_to_rgb(color: str) -> tuple[int, int, int]:
+    color = color.strip().lstrip("#")
+    if len(color) != 6:
+        return (0, 0, 0)
+    try:
+        return (int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16))
+    except ValueError:
+        return (0, 0, 0)
+
+
+class ZeptrionLedLight(ZeptrionHubEntity, LightEntity):
+    """Background colour of one Smartfront LED (the only LED setting clients may change).
+
+    The zApp keeps using the LED for its own indications and shows the background colour
+    otherwise. Disabled by default; enable the LEDs you want to use as status displays.
+    """
+
+    _attr_translation_key = "led"
+    _attr_entity_registry_enabled_default = False
+    _attr_color_mode = ColorMode.RGB
+    _attr_supported_color_modes = {ColorMode.RGB}  # noqa: RUF012
+
+    def __init__(self, coordinator: ZeptrionCoordinator, key: KeyFunction) -> None:
+        super().__init__(coordinator, f"led_{key.key}")
+        self._led = key.key
+        self._attr_translation_placeholders = {"key": str(key.key)}
+
+    @property
+    def _rgb(self) -> tuple[int, int, int]:
+        return _hex_to_rgb(self.coordinator.led_colors.get(self._led, "#000000"))
+
+    @property
+    def is_on(self) -> bool:
+        return max(self._rgb) > 0
+
+    @property
+    def brightness(self) -> int | None:
+        return max(self._rgb) if self.is_on else None
+
+    @property
+    def rgb_color(self) -> tuple[int, int, int] | None:
+        rgb = self._rgb
+        peak = max(rgb)
+        if peak == 0:
+            return None
+        return (round(rgb[0] * 255 / peak), round(rgb[1] * 255 / peak), round(rgb[2] * 255 / peak))
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        rgb = kwargs.get(ATTR_RGB_COLOR) or self.rgb_color or (255, 255, 255)
+        brightness = kwargs.get(ATTR_BRIGHTNESS, self.brightness or _FULL)
+        scaled = tuple(max(0, min(255, round(c * brightness / _FULL))) for c in rgb)
+        await self._write("#{:02x}{:02x}{:02x}".format(*scaled))
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        await self._write("#000000")
+
+    async def _write(self, color: str) -> None:
+        coordinator = self.coordinator
+        previous = coordinator.led_colors.get(self._led, "#000000")
+        try:
+            await coordinator.device.set_led_backgrounds({self._led: color})
+        except ZeptrionError as err:
+            raise command_error(err) from err
+        coordinator.led_history.append({self._led: previous})
+        del coordinator.led_history[:-LED_HISTORY]
+        coordinator.led_colors[self._led] = color
+        coordinator.async_update_listeners()

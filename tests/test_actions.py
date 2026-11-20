@@ -64,13 +64,19 @@ async def test_end_stops_from_wall_keys(
     assert 0 < fake.channels[1].position < 100
 
 
-async def test_unknown_run_makes_state_unknown(
+async def test_runs_of_unknown_origin(
     hass: HomeAssistant, loaded_entry: MockConfigEntry, fake: FakeZeptrionDevice
 ) -> None:
     cover = entity_id(hass, "cover", f"{SERIAL}_ch2")
     await _cover_service(hass, cover, "close_cover")
     await wait_for_state(hass, cover, lambda s: s.state == CoverState.CLOSED, timeout=5)
-    await fake.set_value(2, 100)  # started by something we can't interpret
+    # Started by something we can't interpret, from the bottom: it can only have gone up.
+    await fake.set_value(2, 100)
+    await wait_for_state(hass, cover, lambda s: s.state == CoverState.OPENING)
+    await fake.set_value(2, 0)
+    await wait_for_state(hass, cover, lambda s: s.state == CoverState.OPEN)
+    # From somewhere in between: direction and end unknown.
+    await fake.set_value(2, 100)
     await fake.set_value(2, 0)
     await wait_for_state(hass, cover, lambda s: s.state == "unknown")
 

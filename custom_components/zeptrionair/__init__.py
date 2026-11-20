@@ -67,4 +67,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ZeptrionConfigEntry) ->
 
 
 async def _async_options_updated(hass: HomeAssistant, entry: ZeptrionConfigEntry) -> None:
-    await hass.config_entries.async_reload(entry.entry_id)
+    """Entities read their options live: refresh them instead of reloading (which would stop
+    following covers that are moving, e.g. while learning travel times)."""
+    entry.runtime_data.async_update_listeners()

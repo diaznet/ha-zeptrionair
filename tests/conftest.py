@@ -32,7 +32,7 @@ def fast_reconnect(monkeypatch: pytest.MonkeyPatch) -> None:
 def default_channels() -> list[FakeChannel]:
     return [
         FakeChannel("1", name="Terrace", group="Garden"),
-        FakeChannel("5", name="Kitchen shade", group="Kitchen", travel_time=100),
+        FakeChannel("5", name="Kitchen shade", group="Kitchen", travel_time=200),
     ]
 
 
