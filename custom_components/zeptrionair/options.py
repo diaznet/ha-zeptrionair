@@ -93,6 +93,12 @@ class ZeptrionOptionsFlow(OptionsFlow):
             options = {**self.config_entry.options}
             channels = {**options.get(CONF_CHANNELS, {})}
             saved = dict(user_input)
+            # Store "Estimate position" only once it was chosen: left at its default (off until
+            # both travel times are measured), learning may still switch it on later.
+            if CONF_POSITION_TRACKING not in current and saved.get(CONF_POSITION_TRACKING) == bool(
+                current.get(CONF_LEARNED_UP) and current.get(CONF_LEARNED_DOWN)
+            ):
+                saved.pop(CONF_POSITION_TRACKING, None)
             # Keep the "measured" flags unless the travel time was changed by hand.
             for key, flag in (
                 (CONF_TRAVEL_TIME_UP, CONF_LEARNED_UP),

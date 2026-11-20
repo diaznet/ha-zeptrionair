@@ -164,7 +164,8 @@ def switcher(row: dict[str, str], lang: str) -> str:
         f"**{name}**" if code == lang else f"[{name}]({row[code]})"
         for code, name in LANGUAGES.items()
     ]
-    return f"{SWITCHER_MARK} " + " · ".join(parts) + "\n"
+    # The marker goes last: a line starting with an HTML comment is rendered as raw HTML.
+    return " · ".join(parts) + f" {SWITCHER_MARK}\n"
 
 
 def sidebar(titles: dict[str, str]) -> str:
@@ -213,7 +214,8 @@ def main() -> int:
             if not path.exists():
                 continue
             text = path.read_text(encoding="utf-8")
-            body = text.split("\n", 1)[1] if text.startswith(SWITCHER_MARK) else text
+            first, _, rest = text.partition("\n")
+            body = rest if SWITCHER_MARK in first else text
             wanted = switcher(row, code) + "\n" + body.lstrip("\n")
             if text != wanted:
                 if fix:

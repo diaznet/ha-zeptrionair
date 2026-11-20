@@ -4,6 +4,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.1]
+
+### Fixed
+- Saving a cover's settings with *Estimate position* left at its default (off) no longer stops learning from switching estimation on once both travel times are known. Switching it off after that is still kept.
+
+### Changed
+- The user documentation moved to the [wiki](https://github.com/diaznet/ha-zeptrionair/wiki), in English, German, French and Italian.
+
 ## [0.2.0]
 
 ### Added
@@ -77,7 +85,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Translations: English, German, French, Italian.
 - Local brand icon (Home Assistant 2026.3+).
 
-[Unreleased]: https://github.com/diaznet/ha-zeptrionair/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/diaznet/ha-zeptrionair/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/diaznet/ha-zeptrionair/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/diaznet/ha-zeptrionair/compare/v0.1.1...v0.1.2
