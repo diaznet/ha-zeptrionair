@@ -53,12 +53,14 @@
         "data": {
           "position_tracking": "Position schätzen",
           "travel_time_up": "Laufzeit nach oben",
-          "travel_time_down": "Laufzeit nach unten"
+          "travel_time_down": "Laufzeit nach unten",
+          "step_duration": "Schrittdauer"
         },
         "data_description": {
           "position_tracking": "Eine geschätzte Position anzeigen und das Anfahren einer Position erlauben.",
           "travel_time_up": "Sekunden von ganz geschlossen bis ganz offen.",
-          "travel_time_down": "Sekunden von ganz offen bis ganz geschlossen."
+          "travel_time_down": "Sekunden von ganz offen bis ganz geschlossen.",
+          "step_duration": "Millisekunden, die eine Store für die Tasten Schritt hoch / Schritt runter und die Schritt-Aktion fährt."
         }
       },
       "dimmer": {
@@ -68,7 +70,7 @@
           "dim_time": "Gesamte Dimmzeit"
         },
         "data_description": {
-          "dim_time": "Millisekunden, um von 0 % auf 100 % zu dimmen."
+          "dim_time": "Millisekunden, um von 0 % auf 100 % zu dimmen (etwa 3400 bei Feller-Dimmern)."
         }
       }
     },
@@ -81,6 +83,15 @@
     "button": {
       "recall_scene": {
         "name": "Szene {scene} abrufen"
+      },
+      "store_scene": {
+        "name": "Szene {scene} speichern"
+      },
+      "step_up": {
+        "name": "Schritt hoch"
+      },
+      "step_down": {
+        "name": "Schritt runter"
       }
     },
     "event": {
@@ -122,6 +133,70 @@
     },
     "position_unknown": {
       "message": "Die aktuelle Position ist unbekannt. Fahre die Store zuerst ganz auf oder ganz zu."
+    },
+    "no_target": {
+      "message": "Keines der gewählten Ziele ist ein zeptrionAir-Licht oder eine zeptrionAir-Store."
+    },
+    "entity_missing": {
+      "message": "Das Licht oder die Store dieses Kanals ist nicht geladen."
+    }
+  },
+  "services": {
+    "store_scene": {
+      "name": "Szene speichern",
+      "description": "Speichert den aktuellen Zustand eines Lichts oder einer Store im zApp als Szene 1-4, wie das Halten einer Szenentaste an der Wand. Für Storen empfiehlt Feller: zuerst ganz hochfahren, dann auf die gewünschte Höhe, dann speichern.",
+      "fields": {
+        "scene": {
+          "name": "Szene",
+          "description": "Szenennummer 1-4."
+        }
+      }
+    },
+    "recall_scene": {
+      "name": "Szene abrufen",
+      "description": "Ruft die im zApp gespeicherte Szene 1-4 eines Lichts oder einer Store ab.",
+      "fields": {
+        "scene": {
+          "name": "Szene",
+          "description": "Szenennummer 1-4."
+        }
+      }
+    },
+    "move_step": {
+      "name": "Store um einen Schritt fahren",
+      "description": "Fährt eine Store kurz, z. B. um die Lamellen zu wenden.",
+      "fields": {
+        "direction": {
+          "name": "Richtung",
+          "description": "Hoch oder runter."
+        },
+        "duration": {
+          "name": "Dauer",
+          "description": "Fahrzeit in Millisekunden (100-32000). Standard: die Schrittdauer der Store."
+        }
+      }
+    },
+    "write_name": {
+      "name": "Name ins zApp schreiben",
+      "description": "Schreibt einen Namen und eine Gruppe (Raum) ins zApp, damit die zeptrion-App dieselben Namen zeigt. Je höchstens 32 Bytes; längere Texte werden gekürzt.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "Zu schreibender Name. Standard: der Name des Kanal-Geräts in Home Assistant."
+        },
+        "group": {
+          "name": "Gruppe",
+          "description": "Zu schreibende Gruppe (Raum). Standard: der Bereich des Geräts."
+        }
+      }
+    }
+  },
+  "selector": {
+    "direction": {
+      "options": {
+        "up": "Hoch",
+        "down": "Runter"
+      }
     }
   }
 }

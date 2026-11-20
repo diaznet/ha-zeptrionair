@@ -16,10 +16,11 @@ Built on the [zeptrionair-api](https://github.com/diaznet/zeptrionair-api) libra
 | | |
 |---|---|
 | **Discovery** | Automatic via mDNS (`_zapp._tcp`, older firmware via `_http._tcp`) and DHCP, or manual setup by hostname/IP. A device's IP address is updated automatically when it changes. |
-| **Lights** | On/off channels. Dimmers with brightness (**experimental**, untested on real dimmers). |
-| **Covers** | Blinds, shades and awnings: open, close and stop, with live *opening/closing* state, including when moved from the wall switch. Optional **position estimation** from travel times, with *set position*. |
+| **Lights** | On/off channels. Dimmers with brightness (**experimental**, untested on real dimmers; see below). |
+| **Covers** | Blinds, shades and awnings: open, close and stop, with live *opening/closing* state, including when moved from the wall switch. **Open/closed** is detected from the end stops, without any setup. *Step up / Step down* buttons. Optional **position estimation** from travel times, with *set position*. |
 | **Events** | One event entity per Smartfront key and Smartbutton (`press`/`release`), for automations. |
-| **Scenes** | Buttons to recall the 4 scenes stored on each channel (disabled by default). |
+| **Scenes** | Buttons to recall and store the 4 scenes stored on each channel (disabled by default). |
+| **Actions** | `zeptrionair.store_scene`, `recall_scene`, `move_step`, `write_name` (see below). |
 | **Diagnostics** | Wi-Fi signal and device temperature sensors (disabled by default), plus a diagnostics download with identifying data redacted. |
 | **Languages** | English, Deutsch, Français, Italiano |
 
@@ -50,15 +51,32 @@ mDNS doesn't always work across Wi-Fi networks or VLANs, and some devices answer
 ### Options (per channel)
 **Settings → Devices & services → Feller zeptrionAir → Configure**, then choose a channel:
 
-- **Covers:** *Estimate position*, plus *Travel time up/down* in seconds. Measure a full travel with a stopwatch. With estimation enabled, the position snaps to 0 % or 100 % whenever the cover reaches its end position. If the cover is moved by something the integration can't interpret (for example a Smartbutton on another device), the position becomes unknown until the next full open or close.
-- **Dimmers:** *Full dimming time* (ms from 0 to 100 %), used to reach a requested brightness.
+- **Covers:** *Step duration* (ms, default 250) for the step buttons and action. *Estimate position*, plus *Travel time up/down* in seconds. Measure a full travel with a stopwatch. With estimation enabled, the position snaps to 0 % or 100 % whenever the cover reaches its end position. If the cover is moved by something the integration can't interpret (for example a Smartbutton on another device), the position becomes unknown until the next full open or close.
+- **Dimmers:** *Full dimming time* (ms from 0 to 100 %, default 3400), used to reach a requested brightness.
+
+## Actions
+
+| Action | Targets | What it does |
+|---|---|---|
+| `zeptrionair.store_scene` | lights, covers | Stores the current state on the zApp as scene 1-4, like holding a scene key on the wall. For blinds, Feller recommends driving fully up first, then to the wanted height, then storing. |
+| `zeptrionair.recall_scene` | lights, covers | Recalls scene 1-4. |
+| `zeptrionair.move_step` | covers | Moves a cover `up` or `down` for `duration` ms (default: the *Step duration* option), e.g. to turn the slats of a blind. |
+| `zeptrionair.write_name` | lights, covers | Writes a name and group (room) into the zApp, so the zeptrion app shows the same names. Without `name`/`group`, the device's name and area in Home Assistant are used. At most 32 bytes each. |
+
+```yaml
+action: zeptrionair.store_scene
+target:
+  entity_id: cover.office_shade
+data:
+  scene: 1
+```
 
 ## How it works and its limits
 
 - The devices report covers only as **motor running / stopped**, never a position. Direction comes from the command sent by Home Assistant, or from the wall key that was pressed (decoded from the Smartfront key layout).
-- Dimmers can only dim *for a time*. Brightness is reached by dimming for a computed duration and then correcting once. Feedback from dimmer owners is welcome.
+- **Dimmers** are reported to answer *on* (100) at any brightness, so the brightness can't be read back. It is tracked **optimistically**: Home Assistant remembers the brightness it set (also across restarts and for scenes stored through Home Assistant). A brightness is reached by dimming for a computed time from the known brightness, or by switching on (100 %) and dimming down. Changes made at the wall are seen as on/off only. Feedback from dimmer owners is welcome.
 - Home Assistant builds entity IDs from the area and the channel name, e.g. `cover.kitchen_kitchen_shade` for a channel named "Kitchen Shade" in the area "Kitchen". You can rename entity IDs in the entity settings.
-- Without position estimation, covers show the state *unknown* and keep both open and close available.
+- **End stops:** a run that nobody stopped (no stop command or key press, no step, no scene) ended at an end stop, because the zApp switches the motor off there. The cover then shows *closed* or *open*, also without position estimation. A run stopped in between shows *open*. A run of unknown direction (e.g. a Smartbutton on another zApp, or a scene) makes the state *unknown* until the next full run.
 
 ## Supported hardware
 

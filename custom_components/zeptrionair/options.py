@@ -13,9 +13,11 @@ from .const import (
     CONF_CHANNELS,
     CONF_DIM_TIME,
     CONF_POSITION_TRACKING,
+    CONF_STEP_DURATION,
     CONF_TRAVEL_TIME_DOWN,
     CONF_TRAVEL_TIME_UP,
     DEFAULT_DIM_TIME,
+    DEFAULT_STEP_DURATION,
     DEFAULT_TRAVEL_TIME,
 )
 
@@ -122,6 +124,18 @@ class ZeptrionOptionsFlow(OptionsFlow):
                         CONF_TRAVEL_TIME_DOWN,
                         default=current.get(CONF_TRAVEL_TIME_DOWN, DEFAULT_TRAVEL_TIME),
                     ): _seconds(1, 300),
+                    vol.Required(
+                        CONF_STEP_DURATION,
+                        default=current.get(CONF_STEP_DURATION, DEFAULT_STEP_DURATION),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=100,
+                            max=32000,
+                            step=50,
+                            unit_of_measurement="ms",
+                            mode=selector.NumberSelectorMode.BOX,
+                        )
+                    ),
                 }
             )
             step_id = "cover"

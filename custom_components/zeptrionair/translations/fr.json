@@ -53,12 +53,14 @@
         "data": {
           "position_tracking": "Estimer la position",
           "travel_time_up": "Durée de montée",
-          "travel_time_down": "Durée de descente"
+          "travel_time_down": "Durée de descente",
+          "step_duration": "Durée d'un pas"
         },
         "data_description": {
           "position_tracking": "Afficher une position estimée et permettre de régler une position.",
           "travel_time_up": "Secondes de complètement fermé à complètement ouvert.",
-          "travel_time_down": "Secondes de complètement ouvert à complètement fermé."
+          "travel_time_down": "Secondes de complètement ouvert à complètement fermé.",
+          "step_duration": "Millisecondes de mouvement d'un store pour les boutons Pas vers le haut / Pas vers le bas et l'action pas."
         }
       },
       "dimmer": {
@@ -68,7 +70,7 @@
           "dim_time": "Durée de variation complète"
         },
         "data_description": {
-          "dim_time": "Millisecondes pour passer de 0 % à 100 %."
+          "dim_time": "Millisecondes pour passer de 0 % à 100 % (environ 3400 pour les variateurs Feller)."
         }
       }
     },
@@ -81,6 +83,15 @@
     "button": {
       "recall_scene": {
         "name": "Rappeler la scène {scene}"
+      },
+      "store_scene": {
+        "name": "Enregistrer la scène {scene}"
+      },
+      "step_up": {
+        "name": "Pas vers le haut"
+      },
+      "step_down": {
+        "name": "Pas vers le bas"
       }
     },
     "event": {
@@ -122,6 +133,70 @@
     },
     "position_unknown": {
       "message": "La position actuelle est inconnue. Ouvrez ou fermez d'abord complètement le store."
+    },
+    "no_target": {
+      "message": "Aucune lumière ni aucun store zeptrionAir ne correspond aux cibles choisies."
+    },
+    "entity_missing": {
+      "message": "La lumière ou le store de ce canal n'est pas chargé."
+    }
+  },
+  "services": {
+    "store_scene": {
+      "name": "Enregistrer une scène",
+      "description": "Enregistre l'état actuel d'une lumière ou d'un store dans le zApp comme scène 1-4, comme en maintenant une touche de scène au mur. Pour les stores, Feller recommande de monter d'abord complètement, puis d'aller à la hauteur voulue, puis d'enregistrer.",
+      "fields": {
+        "scene": {
+          "name": "Scène",
+          "description": "Numéro de scène 1-4."
+        }
+      }
+    },
+    "recall_scene": {
+      "name": "Rappeler une scène",
+      "description": "Rappelle la scène 1-4 enregistrée dans le zApp pour une lumière ou un store.",
+      "fields": {
+        "scene": {
+          "name": "Scène",
+          "description": "Numéro de scène 1-4."
+        }
+      }
+    },
+    "move_step": {
+      "name": "Déplacer un store d'un pas",
+      "description": "Déplace un store brièvement, par ex. pour orienter les lamelles.",
+      "fields": {
+        "direction": {
+          "name": "Direction",
+          "description": "Haut ou bas."
+        },
+        "duration": {
+          "name": "Durée",
+          "description": "Millisecondes de mouvement (100-32000). Par défaut : la durée d'un pas du store."
+        }
+      }
+    },
+    "write_name": {
+      "name": "Écrire le nom dans le zApp",
+      "description": "Écrit un nom et un groupe (pièce) dans le zApp, pour que l'app zeptrion affiche les mêmes noms. 32 octets au plus chacun ; les textes plus longs sont tronqués.",
+      "fields": {
+        "name": {
+          "name": "Nom",
+          "description": "Nom à écrire. Par défaut : le nom de l'appareil du canal dans Home Assistant."
+        },
+        "group": {
+          "name": "Groupe",
+          "description": "Groupe (pièce) à écrire. Par défaut : la pièce de l'appareil."
+        }
+      }
+    }
+  },
+  "selector": {
+    "direction": {
+      "options": {
+        "up": "Haut",
+        "down": "Bas"
+      }
     }
   }
 }

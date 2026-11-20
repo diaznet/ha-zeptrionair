@@ -14,9 +14,23 @@ CONF_POSITION_TRACKING: Final = "position_tracking"
 CONF_TRAVEL_TIME_UP: Final = "travel_time_up"
 CONF_TRAVEL_TIME_DOWN: Final = "travel_time_down"
 CONF_DIM_TIME: Final = "dim_time"
+CONF_STEP_DURATION: Final = "step_duration"
 
 DEFAULT_TRAVEL_TIME: Final = 30.0  # seconds
-DEFAULT_DIM_TIME: Final = 5000  # milliseconds for a full 0-100 % dim
+# Milliseconds for a full 0-100 % dim. Reported for real dimmers, not verified on our hardware.
+DEFAULT_DIM_TIME: Final = 3400
+DEFAULT_STEP_DURATION: Final = 250  # milliseconds of one cover step
+
+# Actions (services)
+SERVICE_STORE_SCENE: Final = "store_scene"
+SERVICE_RECALL_SCENE: Final = "recall_scene"
+SERVICE_MOVE_STEP: Final = "move_step"
+SERVICE_WRITE_NAME: Final = "write_name"
+ATTR_SCENE: Final = "scene"
+ATTR_DIRECTION: Final = "direction"
+ATTR_DURATION: Final = "duration"
+ATTR_NAME: Final = "name"
+ATTR_GROUP: Final = "group"
 
 # Safety polls: rare with a push channel, frequent without one.
 PUSH_POLL_INTERVAL: Final = timedelta(minutes=5)

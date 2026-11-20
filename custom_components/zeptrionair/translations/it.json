@@ -53,12 +53,14 @@
         "data": {
           "position_tracking": "Stima la posizione",
           "travel_time_up": "Tempo di salita",
-          "travel_time_down": "Tempo di discesa"
+          "travel_time_down": "Tempo di discesa",
+          "step_duration": "Durata di un passo"
         },
         "data_description": {
           "position_tracking": "Mostra una posizione stimata e consente di impostare una posizione.",
           "travel_time_up": "Secondi da completamente chiusa a completamente aperta.",
-          "travel_time_down": "Secondi da completamente aperta a completamente chiusa."
+          "travel_time_down": "Secondi da completamente aperta a completamente chiusa.",
+          "step_duration": "Millisecondi di movimento di una tenda per i pulsanti Passo su / Passo giù e l'azione passo."
         }
       },
       "dimmer": {
@@ -68,7 +70,7 @@
           "dim_time": "Tempo di regolazione completo"
         },
         "data_description": {
-          "dim_time": "Millisecondi per passare da 0 % a 100 %."
+          "dim_time": "Millisecondi per passare da 0 % a 100 % (circa 3400 per i dimmer Feller)."
         }
       }
     },
@@ -81,6 +83,15 @@
     "button": {
       "recall_scene": {
         "name": "Richiama scena {scene}"
+      },
+      "store_scene": {
+        "name": "Salva scena {scene}"
+      },
+      "step_up": {
+        "name": "Passo su"
+      },
+      "step_down": {
+        "name": "Passo giù"
       }
     },
     "event": {
@@ -122,6 +133,70 @@
     },
     "position_unknown": {
       "message": "La posizione attuale è sconosciuta. Apri o chiudi prima completamente la tenda."
+    },
+    "no_target": {
+      "message": "Nessuna luce o tenda zeptrionAir corrisponde ai target selezionati."
+    },
+    "entity_missing": {
+      "message": "La luce o la tenda di questo canale non è caricata."
+    }
+  },
+  "services": {
+    "store_scene": {
+      "name": "Salva scena",
+      "description": "Salva lo stato attuale di una luce o di una tenda nello zApp come scena 1-4, come tenendo premuto un tasto scena a parete. Per le tende Feller consiglia di salire prima completamente, poi andare all'altezza desiderata, poi salvare.",
+      "fields": {
+        "scene": {
+          "name": "Scena",
+          "description": "Numero di scena 1-4."
+        }
+      }
+    },
+    "recall_scene": {
+      "name": "Richiama scena",
+      "description": "Richiama la scena 1-4 salvata nello zApp per una luce o una tenda.",
+      "fields": {
+        "scene": {
+          "name": "Scena",
+          "description": "Numero di scena 1-4."
+        }
+      }
+    },
+    "move_step": {
+      "name": "Muovi la tenda di un passo",
+      "description": "Muove una tenda brevemente, ad es. per orientare le lamelle.",
+      "fields": {
+        "direction": {
+          "name": "Direzione",
+          "description": "Su o giù."
+        },
+        "duration": {
+          "name": "Durata",
+          "description": "Millisecondi di movimento (100-32000). Predefinito: la durata di un passo della tenda."
+        }
+      }
+    },
+    "write_name": {
+      "name": "Scrivi il nome nello zApp",
+      "description": "Scrive un nome e un gruppo (stanza) nello zApp, così l'app zeptrion mostra gli stessi nomi. Al massimo 32 byte ciascuno; i testi più lunghi vengono troncati.",
+      "fields": {
+        "name": {
+          "name": "Nome",
+          "description": "Nome da scrivere. Predefinito: il nome del dispositivo del canale in Home Assistant."
+        },
+        "group": {
+          "name": "Gruppo",
+          "description": "Gruppo (stanza) da scrivere. Predefinito: l'area del dispositivo."
+        }
+      }
+    }
+  },
+  "selector": {
+    "direction": {
+      "options": {
+        "up": "Su",
+        "down": "Giù"
+      }
     }
   }
 }

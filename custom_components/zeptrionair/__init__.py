@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
 from zeptrionair_api import ZeptrionDevice
 
 from .const import DOMAIN, MANUFACTURER
 from .coordinator import ZeptrionConfigEntry, ZeptrionCoordinator
+from .services import async_setup_services
 
 PLATFORMS: list[Platform] = [
     Platform.BUTTON,
@@ -18,6 +21,15 @@ PLATFORMS: list[Platform] = [
     Platform.LIGHT,
     Platform.SENSOR,
 ]
+
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the integration's actions (once, for all zApps)."""
+    async_setup_services(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ZeptrionConfigEntry) -> bool:

@@ -14,6 +14,7 @@ from custom_components.zeptrionair.const import (
     CONF_CHANNELS,
     CONF_DIM_TIME,
     CONF_POSITION_TRACKING,
+    CONF_STEP_DURATION,
     CONF_TRAVEL_TIME_DOWN,
     CONF_TRAVEL_TIME_UP,
     DOMAIN,
@@ -41,13 +42,19 @@ async def test_cover_options(hass: HomeAssistant, loaded_entry: MockConfigEntry)
     assert result["description_placeholders"] == {"channel": "Shade (ch2)"}
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
-        {CONF_POSITION_TRACKING: True, CONF_TRAVEL_TIME_UP: 25, CONF_TRAVEL_TIME_DOWN: 22.5},
+        {
+            CONF_POSITION_TRACKING: True,
+            CONF_TRAVEL_TIME_UP: 25,
+            CONF_TRAVEL_TIME_DOWN: 22.5,
+            CONF_STEP_DURATION: 400,
+        },
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert loaded_entry.options[CONF_CHANNELS]["2"] == {
         CONF_POSITION_TRACKING: True,
         CONF_TRAVEL_TIME_UP: 25,
         CONF_TRAVEL_TIME_DOWN: 22.5,
+        CONF_STEP_DURATION: 400,
     }
     await hass.async_block_till_done()  # reload
     state = hass.states.get(entity_id(hass, "cover", f"{fake_serial}_ch2"))

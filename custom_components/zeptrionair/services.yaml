@@ -1,0 +1,75 @@
+store_scene:
+  target:
+    entity:
+      integration: zeptrionair
+      domain:
+        - cover
+        - light
+  fields:
+    scene:
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+
+recall_scene:
+  target:
+    entity:
+      integration: zeptrionair
+      domain:
+        - cover
+        - light
+  fields:
+    scene:
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+
+move_step:
+  target:
+    entity:
+      integration: zeptrionair
+      domain: cover
+  fields:
+    direction:
+      required: true
+      example: down
+      selector:
+        select:
+          translation_key: direction
+          options:
+            - up
+            - down
+    duration:
+      example: 250
+      selector:
+        number:
+          min: 100
+          max: 32000
+          step: 50
+          unit_of_measurement: ms
+          mode: box
+
+write_name:
+  target:
+    entity:
+      integration: zeptrionair
+      domain:
+        - cover
+        - light
+  fields:
+    name:
+      example: Kitchen
+      selector:
+        text:
+    group:
+      example: Ground floor
+      selector:
+        text:

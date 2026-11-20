@@ -3,6 +3,15 @@
     "button": {
       "recall_scene": {
         "default": "mdi:palette-outline"
+      },
+      "store_scene": {
+        "default": "mdi:content-save-outline"
+      },
+      "step_up": {
+        "default": "mdi:arrow-up-thin"
+      },
+      "step_down": {
+        "default": "mdi:arrow-down-thin"
       }
     },
     "event": {
@@ -12,6 +21,20 @@
       "smartbutton": {
         "default": "mdi:gesture-tap-box"
       }
+    }
+  },
+  "services": {
+    "store_scene": {
+      "service": "mdi:content-save-outline"
+    },
+    "recall_scene": {
+      "service": "mdi:palette-outline"
+    },
+    "move_step": {
+      "service": "mdi:arrow-up-down"
+    },
+    "write_name": {
+      "service": "mdi:rename-outline"
     }
   }
 }

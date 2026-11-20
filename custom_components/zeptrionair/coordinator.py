@@ -81,6 +81,8 @@ class ZeptrionCoordinator(DataUpdateCoordinator[ZeptrionData]):
         self.hub_device_id: str | None = None
         self._key_listeners: list[Callable[[KeyEvent], None]] = []
         self._directions: dict[int, _DirectionHint] = {}
+        self._stops: dict[int, float] = {}
+        self._partial_runs: dict[int, float] = {}
         self._unavailable_timer: CALLBACK_TYPE | None = None
         self._stream_down = False
 
@@ -155,7 +157,11 @@ class ZeptrionCoordinator(DataUpdateCoordinator[ZeptrionData]):
             function = event.function
             if event.pressed and function is not None and function.direction is not None:
                 for channel in function.channels:
-                    self.note_direction(channel, function.direction)
+                    running = self.data is not None and self.data.values.get(channel) == 100
+                    if running:
+                        self.note_stop(channel)  # a press while a cover runs stops it
+                    else:
+                        self.note_direction(channel, function.direction)
             for listener in list(self._key_listeners):
                 listener(event)
         else:
@@ -210,11 +216,33 @@ class ZeptrionCoordinator(DataUpdateCoordinator[ZeptrionData]):
         """Remember which way a cover is about to move (from a command or a key press)."""
         self._directions[channel] = _DirectionHint(direction)
 
-    def recent_direction(self, channel: int) -> Direction | None:
-        hint = self._directions.get(channel)
+    def consume_direction(self, channel: int) -> Direction | None:
+        """The direction noted for the run that is starting now (each hint is used once)."""
+        hint = self._directions.pop(channel, None)
         if hint is None or time.monotonic() - hint.at > DIRECTION_VALID_FOR:
             return None
         return hint.direction
+
+    # A run that ends without anyone stopping it reached an end stop. These hints tell a cover
+    # that its run will be (or was) ended by someone: a stop command or a key press, a timed
+    # command, or a scene recall.
+
+    @callback
+    def note_stop(self, channel: int) -> None:
+        self._stops[channel] = time.monotonic()
+
+    def recent_stop(self, channel: int) -> bool:
+        at = self._stops.get(channel)
+        return at is not None and time.monotonic() - at <= DIRECTION_VALID_FOR
+
+    @callback
+    def note_partial_run(self, channel: int) -> None:
+        """The next run of ``channel`` ends on its own before an end stop (timed command)."""
+        self._partial_runs[channel] = time.monotonic()
+
+    def consume_partial_run(self, channel: int) -> bool:
+        at = self._partial_runs.pop(channel, None)
+        return at is not None and time.monotonic() - at <= DIRECTION_VALID_FOR
 
     # ---------------------------------------------------------------- helpers
 

@@ -91,3 +91,58 @@ async def test_live_devices(hass: HomeAssistant, allow_devices: None) -> None:
     for entry in entries:
         await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
+
+
+COVER = os.environ.get("ZEPTRION_LIVE_COVER", "")
+
+
+async def _wait(hass: HomeAssistant, entity_id: str, states: set[str], timeout: float) -> float:
+    start = time.monotonic()
+    while hass.states.get(entity_id).state not in states:
+        assert time.monotonic() - start < timeout, f"{entity_id} never reached {states}"
+        await asyncio.sleep(0.05)
+    return time.monotonic() - start
+
+
+@pytest.mark.skipif(not COVER, reason="set ZEPTRION_LIVE_COVER=ip:channel to move a cover")
+async def test_live_cover(hass: HomeAssistant, allow_devices: None) -> None:
+    """MOVES THE COVER: 1 s step down/up, full close, full open (ends fully open)."""
+    host, channel = COVER.rsplit(":", 1)
+    async with ZeptrionDevice(host) as device:
+        serial = (await device.identify()).serial
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=serial, data={CONF_HOST: host})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    await asyncio.sleep(1)
+    cover = er.async_get(hass).async_get_entity_id("cover", DOMAIN, f"{serial}_ch{channel}")
+    assert cover is not None
+    print(f"\n{cover}: start state {hass.states.get(cover).state}")
+
+    async def call(domain: str, service: str, **data: object) -> None:
+        await hass.services.async_call(domain, service, {"entity_id": cover, **data}, blocking=True)
+
+    await call(DOMAIN, "move_step", direction="down", duration=1000)
+    await _wait(hass, cover, {"closing"}, 5)
+    await _wait(hass, cover, {"open", "closed"}, 10)
+    print(f"step down 1 s -> {hass.states.get(cover).state} (expected: open)")
+    assert hass.states.get(cover).state == "open"
+    await call(DOMAIN, "move_step", direction="up", duration=1000)
+    await _wait(hass, cover, {"opening"}, 5)
+    await _wait(hass, cover, {"open", "closed"}, 10)
+    print(f"step up 1 s -> {hass.states.get(cover).state}")
+
+    await call("cover", "close_cover")
+    await _wait(hass, cover, {"closing"}, 5)
+    down = await _wait(hass, cover, {"closed", "open"}, 180)
+    print(f"full close -> {hass.states.get(cover).state} after {down:.1f} s (travel time down)")
+    assert hass.states.get(cover).state == "closed"
+
+    await call("cover", "open_cover")
+    await _wait(hass, cover, {"opening"}, 5)
+    up = await _wait(hass, cover, {"open", "closed"}, 180)
+    print(f"full open -> {hass.states.get(cover).state} after {up:.1f} s (travel time up)")
+    assert hass.states.get(cover).state == "open"
+
+    await hass.config_entries.async_unload(entry.entry_id)
+    await hass.async_block_till_done()

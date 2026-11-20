@@ -1,8 +1,12 @@
 """Covers: blinds/shades (category 5) and awnings (category 6).
 
 The device reports only whether the motor runs (value 100) or not (0). Direction comes from the
-last command sent by Home Assistant or from a decoded wall-key press. With position tracking
-enabled in the options, the position is estimated from configured travel times.
+last command sent by Home Assistant or from a decoded wall-key press.
+
+End stops: a run that ends without anyone stopping it (no stop command or key press, no timed
+command, no scene recall) reached an end stop, because the zApp switches the motor off there. So
+the cover is shown open or closed even without travel times. With position tracking enabled in
+the options, the position is also estimated from the configured travel times.
 """
 
 from __future__ import annotations
@@ -17,27 +21,30 @@ from homeassistant.components.cover import (
     CoverEntity,
     CoverEntityFeature,
 )
+from homeassistant.const import STATE_CLOSED, STATE_OPEN
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.restore_state import RestoreEntity
-from zeptrionair_api import Category, Channel, ZeptrionError, timed_command
+from zeptrionair_api import Category, Channel, timed_command
 from zeptrionair_api.const import TIMED_MAX_MS, TIMED_MIN_MS
 
 from .const import (
     CONF_POSITION_TRACKING,
+    CONF_STEP_DURATION,
     CONF_TRAVEL_TIME_DOWN,
     CONF_TRAVEL_TIME_UP,
+    DEFAULT_STEP_DURATION,
     DEFAULT_TRAVEL_TIME,
     DOMAIN,
 )
 from .coordinator import Direction, ZeptrionConfigEntry, ZeptrionCoordinator
-from .entity import ZeptrionChannelEntity
+from .entity import ZeptrionMainChannelEntity
 from .options import channel_options
 
 PARALLEL_UPDATES = 0
-_END_SNAP = 0.95  # a self-stop after >= 95 % of the travel time means an end position
+_END_SNAP = 0.95  # with travel times: a run of >= 95 % of the travel time ends at the end stop
 _TICK = timedelta(seconds=1)
 _ATTR_POSITION = "current_position"
 
@@ -55,7 +62,7 @@ async def async_setup_entry(
     )
 
 
-class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
+class ZeptrionCover(ZeptrionMainChannelEntity, CoverEntity, RestoreEntity):
     """A cover channel. The entity is the main feature of its channel device."""
 
     _attr_name = None
@@ -73,15 +80,18 @@ class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
             "up": float(options.get(CONF_TRAVEL_TIME_UP, DEFAULT_TRAVEL_TIME)),
             "down": float(options.get(CONF_TRAVEL_TIME_DOWN, DEFAULT_TRAVEL_TIME)),
         }
+        self.step_duration = int(options.get(CONF_STEP_DURATION, DEFAULT_STEP_DURATION))
         features = CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP
         if self._tracking:
             features |= CoverEntityFeature.SET_POSITION
         self._attr_supported_features = features
         self._attr_assumed_state = not self._tracking
 
-        self._position: float | None = None  # 0 = closed, 100 = open
+        self._position: float | None = None  # 0 = closed, 100 = open (with tracking)
+        self._closed: bool | None = None  # open/closed state (without tracking)
         self._moving = False
         self._direction: Direction | None = None
+        self._partial_run = False  # this run will end before an end stop (timed command)
         self._started_at = 0.0
         self._start_position: float | None = None
         self._ticker: CALLBACK_TYPE | None = None
@@ -91,14 +101,17 @@ class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        if self._tracking and (last := await self.async_get_last_state()) is not None:
+        if (last := await self.async_get_last_state()) is not None:
+            if last.state in (STATE_OPEN, STATE_CLOSED):
+                self._closed = last.state == STATE_CLOSED
             position = last.attributes.get(_ATTR_POSITION)
-            if isinstance(position, (int, float)):
+            if self._tracking and isinstance(position, (int, float)):
                 self._position = float(position)
         self._moving = self.value == 100
-        if self._moving:
+        if self._moving:  # moving at startup: direction unknown
             self._direction = None
             self._position = None
+            self._closed = None
         self.async_on_remove(self._cancel_timers)
 
     @callback
@@ -106,9 +119,7 @@ class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
         if self._ticker is not None:
             self._ticker()
             self._ticker = None
-        if self._stop_timer is not None:
-            self._stop_timer()
-            self._stop_timer = None
+        self._cancel_stop_timer()
 
     # ----------------------------------------------------------------- state
 
@@ -122,25 +133,39 @@ class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
         super()._handle_coordinator_update()
 
     def _on_start(self) -> None:
+        number = self.channel.number
         self._moving = True
-        self._direction = self.coordinator.recent_direction(self.channel.number)
+        self._direction = self.coordinator.consume_direction(number)
+        self._partial_run = self.coordinator.consume_partial_run(number)
         self._started_at = time.monotonic()
         self._start_position = self._position if self._direction is not None else None
-        if self._direction is None:
-            self._position = None  # moved by something we can't interpret
+        if self._direction is None:  # moved by something we can't interpret
+            self._position = None
+            self._closed = None
         if self._tracking and self._ticker is None:
             self._ticker = async_track_time_interval(self.hass, self._tick, _TICK)
 
     def _on_stop(self) -> None:
+        number = self.channel.number
+        stopped_by_someone = self._partial_run or self.coordinator.recent_stop(number)
+        at_end_stop = self._direction is not None and not stopped_by_someone
         position = self._live_position()
-        if self._direction is not None and self._tracking:
+        if self._direction is not None:
             elapsed = time.monotonic() - self._started_at
-            if elapsed >= _END_SNAP * self._travel[self._direction]:
+            if self._tracking and elapsed >= _END_SNAP * self._travel[self._direction]:
+                at_end_stop = True
+            if at_end_stop:
                 position = 100.0 if self._direction == "up" else 0.0
+                self._closed = self._direction == "down"
+            else:
+                self._closed = False  # stopped somewhere between the end stops
         self._position = position
         self._moving = False
         self._direction = None
-        self._cancel_timers()
+        self._partial_run = False
+        if self._ticker is not None:
+            self._ticker()
+            self._ticker = None
 
     @callback
     def _tick(self, _now: Any) -> None:
@@ -166,7 +191,9 @@ class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
     @property
     def is_closed(self) -> bool | None:
         position = self.current_cover_position
-        return None if position is None else position == 0
+        if position is not None:
+            return position == 0
+        return self._closed
 
     @property
     def is_opening(self) -> bool:
@@ -184,17 +211,15 @@ class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
 
     # -------------------------------------------------------------- commands
 
-    async def _send(self, command: str, direction: Direction | None) -> None:
+    async def _send(
+        self, command: str, direction: Direction | None, *, partial: bool = False
+    ) -> None:
+        number = self.channel.number
         if direction is not None:
-            self.coordinator.note_direction(self.channel.number, direction)
-        try:
-            await self.coordinator.device.send(self.channel.number, command)
-        except ZeptrionError as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="command_failed",
-                translation_placeholders={"error": str(err)},
-            ) from err
+            self.coordinator.note_direction(number, direction)
+        if partial:
+            self.coordinator.note_partial_run(number)
+        await self.send_command(command)
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         self._cancel_stop_timer()
@@ -206,7 +231,15 @@ class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
 
     async def async_stop_cover(self, **kwargs: Any) -> None:
         self._cancel_stop_timer()
+        self.coordinator.note_stop(self.channel.number)
         await self._send("stop", None)
+
+    async def async_move_step(self, direction: Direction, duration: int | None = None) -> None:
+        """Move for a short time (``duration`` ms, default: the step option) in ``direction``."""
+        milliseconds = max(TIMED_MIN_MS, min(TIMED_MAX_MS, int(duration or self.step_duration)))
+        action = "move_open" if direction == "up" else "move_close"
+        self._cancel_stop_timer()
+        await self._send(timed_command(action, milliseconds), direction, partial=True)
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         target = float(kwargs[ATTR_POSITION])
@@ -231,7 +264,7 @@ class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
         action = "move_open" if direction == "up" else "move_close"
         self._cancel_stop_timer()
         if milliseconds <= TIMED_MAX_MS:
-            await self._send(timed_command(action, milliseconds), direction)
+            await self._send(timed_command(action, milliseconds), direction, partial=True)
         else:  # longer than the device's timed command allows: stop it ourselves
             await self._send(action, direction)
             self._stop_timer = async_call_later(self.hass, seconds, self._timed_stop)
@@ -244,4 +277,11 @@ class ZeptrionCover(ZeptrionChannelEntity, CoverEntity, RestoreEntity):
 
     async def _timed_stop(self, _now: Any) -> None:
         self._stop_timer = None
+        self.coordinator.note_stop(self.channel.number)
         await self._send("stop", None)
+
+    # A scene run goes to the end stop it was stored from and then back for a time, so its end
+    # is not an end stop and its direction is unknown to us.
+
+    def scene_recalling(self, scene: int) -> None:
+        self.coordinator.note_partial_run(self.channel.number)

@@ -53,12 +53,14 @@
         "data": {
           "position_tracking": "Estimate position",
           "travel_time_up": "Travel time up",
-          "travel_time_down": "Travel time down"
+          "travel_time_down": "Travel time down",
+          "step_duration": "Step duration"
         },
         "data_description": {
           "position_tracking": "Show an estimated position and allow setting a position.",
           "travel_time_up": "Seconds from fully closed to fully open.",
-          "travel_time_down": "Seconds from fully open to fully closed."
+          "travel_time_down": "Seconds from fully open to fully closed.",
+          "step_duration": "Milliseconds a cover moves for the Step up / Step down buttons and the step action."
         }
       },
       "dimmer": {
@@ -68,7 +70,7 @@
           "dim_time": "Full dimming time"
         },
         "data_description": {
-          "dim_time": "Milliseconds to dim from 0 % to 100 %."
+          "dim_time": "Milliseconds to dim from 0 % to 100 % (about 3400 for Feller dimmers)."
         }
       }
     },
@@ -81,6 +83,15 @@
     "button": {
       "recall_scene": {
         "name": "Recall scene {scene}"
+      },
+      "store_scene": {
+        "name": "Store scene {scene}"
+      },
+      "step_up": {
+        "name": "Step up"
+      },
+      "step_down": {
+        "name": "Step down"
       }
     },
     "event": {
@@ -122,6 +133,70 @@
     },
     "position_unknown": {
       "message": "The current position is unknown. Open or close the cover fully first."
+    },
+    "no_target": {
+      "message": "No zeptrionAir light or cover matches the selected targets."
+    },
+    "entity_missing": {
+      "message": "The light or cover of this channel isn't loaded."
+    }
+  },
+  "services": {
+    "store_scene": {
+      "name": "Store scene",
+      "description": "Stores the current state of a light or cover on the zApp as scene 1-4, like holding a scene key on the wall. For blinds, Feller recommends driving fully up first, then to the wanted height, then storing.",
+      "fields": {
+        "scene": {
+          "name": "Scene",
+          "description": "Scene number 1-4."
+        }
+      }
+    },
+    "recall_scene": {
+      "name": "Recall scene",
+      "description": "Recalls scene 1-4 stored on the zApp for a light or cover.",
+      "fields": {
+        "scene": {
+          "name": "Scene",
+          "description": "Scene number 1-4."
+        }
+      }
+    },
+    "move_step": {
+      "name": "Move cover a step",
+      "description": "Moves a cover for a short time, e.g. to turn the slats of a blind.",
+      "fields": {
+        "direction": {
+          "name": "Direction",
+          "description": "Up or down."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Milliseconds to move (100-32000). Default: the cover's step duration option."
+        }
+      }
+    },
+    "write_name": {
+      "name": "Write name to zApp",
+      "description": "Writes a name and group (room) into the zApp, so the zeptrion app shows the same names. At most 32 bytes each; longer texts are cut.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "Name to write. Default: the name of the channel's device in Home Assistant."
+        },
+        "group": {
+          "name": "Group",
+          "description": "Group (room) to write. Default: the area of the device."
+        }
+      }
+    }
+  },
+  "selector": {
+    "direction": {
+      "options": {
+        "up": "Up",
+        "down": "Down"
+      }
     }
   }
 }
